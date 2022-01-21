@@ -51,7 +51,7 @@ namespace StockMarket
             .ToList();
 
             //var groupsDictionary = groups.TakeLast(WebMonitor.MAX_CANDLES_IN_GRAPH).ToList().ToDictionary(x => x.TimeStamp, x => x.Value);
-            groups = groups.TakeLast(WebMonitor.MAX_CANDLES_IN_GRAPH).ToList();
+            groups = groups.TakeLastObject(WebMonitor.MAX_CANDLES_IN_GRAPH).ToList();
 
             #region Coulumn Series
 

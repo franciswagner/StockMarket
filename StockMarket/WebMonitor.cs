@@ -196,8 +196,7 @@ namespace PriceMonitor
         {
             ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls
                 | SecurityProtocolType.Tls11
-                | SecurityProtocolType.Tls12
-                | SecurityProtocolType.Ssl3;
+                | SecurityProtocolType.Tls12;
 
             var uri = new Uri(url);
 
