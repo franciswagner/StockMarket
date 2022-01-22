@@ -25,5 +25,11 @@ namespace PriceMonitor
         {
             return source.Skip(Math.Max(0, source.Count() - N));
         }
+
+        public static decimal ToDecimal(this string value)
+        {
+            value = string.IsNullOrEmpty(value) ? "0" : value;
+            return Convert.ToDecimal(value);
+        }
     }
 }

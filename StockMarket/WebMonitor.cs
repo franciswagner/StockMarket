@@ -37,7 +37,7 @@ namespace PriceMonitor
         public WebMonitor(string[] acoes)
         {
             this._acoes = acoes;
-            this.LoadBesteGateway(acoes);
+            this.LoadBestGateway(acoes);
         }
 
         #endregion
@@ -115,7 +115,7 @@ namespace PriceMonitor
         }
 
 
-        private void LoadBesteGateway(string[] acoes)
+        private void LoadBestGateway(string[] acoes)
         {
             var urlGatewayemplate = ConfigurationManager.AppSettings["UrlGatewayTemplate"];
 
@@ -147,9 +147,9 @@ namespace PriceMonitor
             }
         }
 
-        private DateTime? ProcessJsonResult(AcoesJsonReaderPriceCollection acoesJsonReader, List<string> zeroValue)
+        private List<AcoesCollection> ProcessJsonResult(AcoesJsonReaderPriceCollection acoesJsonReader, List<string> zeroValue)
         {
-            DateTime? lastDate = null;
+            var validAcoesCollections = new List<AcoesCollection>();
 
             if (acoesJsonReader != null)
             {
@@ -157,8 +157,6 @@ namespace PriceMonitor
                 {
                     var name = jsonAcao.S;
                     var acao = new Acao(jsonAcao);
-
-                    lastDate = acao.RequestedDate;
 
                     if (acao.OppeningPrice <= 0 || acao.Price <= 0)
                     {
@@ -168,22 +166,25 @@ namespace PriceMonitor
 
                     SaveToFile(name, acao);
 
-                    var acoesMonitor = this.AcoesCollections.FirstOrDefault(x => x.Name == name);
-                    if (acoesMonitor != null)
-                        acoesMonitor.Acoes.Add(acao);
+                    var acoesCollection = this.AcoesCollections.FirstOrDefault(x => x.Name == name);
+                    if (acoesCollection != null)
+                    {
+                        acoesCollection.Acoes.Add(acao);
+                        validAcoesCollections.Add(acoesCollection);
+                    }
                     else
                         this.AcoesCollections.Add(new AcoesCollection(name, acao));
                 }
             }
 
-            return lastDate;
+            return validAcoesCollections;
         }
 
         #endregion
 
         #region Public Methods
 
-        public void Run(Action<List<AcoesCollection>> callback, Action callback_OpenedMarket, Action callback_ClosedMarket, Action<string> callback_Error, Action<int, string> callback_Nitification)
+        public void Run(Action<List<AcoesCollection>> callback, Action callback_OpenedMarket, Action callback_ClosedMarket, Action<string> callback_Error, Action<int, string> callback_Notification)
         {
             Task.Run(() =>
             {
@@ -202,7 +203,7 @@ namespace PriceMonitor
                         callback_Error("Nenhum gateway válido foi identificado.");
 
                         //Retesta os gateways
-                        this.LoadBesteGateway(this._acoes);
+                        this.LoadBestGateway(this._acoes);
 
                         Thread.Sleep(60000);
                         continue;
@@ -218,7 +219,7 @@ namespace PriceMonitor
                         callback_Error($"Falha ao comunicar com a internet ({currentGateway}).");
 
                         //Retesta os gateways
-                        this.LoadBesteGateway(this._acoes);
+                        this.LoadBestGateway(this._acoes);
 
                         Thread.Sleep(60000);
                         continue;
@@ -234,7 +235,7 @@ namespace PriceMonitor
                         errorMessage = $"A URL designada não retornou todos os dados solicitados ({currentGateway}).\r\n    Apenas {acoesJsonReader.Value.Count} de {this._acoes.Length}.";
 
                     var zeroValue = new List<string>();
-                    var lastDate = this.ProcessJsonResult(acoesJsonReader, zeroValue);
+                    var updateddAcoes = this.ProcessJsonResult(acoesJsonReader, zeroValue);
 
                     if (zeroValue.Any())
                     {
@@ -251,19 +252,12 @@ namespace PriceMonitor
 
                     var messageNotification = new StringBuilder();
                     var notifications = 0;
-                    var count = 0;
 
-                    foreach (var acoes in this.AcoesCollections)
+                    foreach (var acoes in updateddAcoes)
                     {
                         var last = acoes.Acoes.LastOrDefault();
 
-                        if (last == null || last.RequestedDate.ToString("dd/MM/yyyy HH:mm") != lastDate.GetValueOrDefault().ToString("dd/MM/yyyy HH:mm"))
-                        {
-                            count++;
-                            continue;
-                        }
-
-                        if (this._minValues[acoes.Name] != 0 && (last.MinimunPrice < this._minValues[acoes.Name] || last.Price <= this._minValues[acoes.Name]))
+                        if (last.MinimunPrice < this._minValues[acoes.Name] || last.Price <= this._minValues[acoes.Name])
                         {
                             this._minValues[acoes.Name] = Math.Min(last.MinimunPrice, last.Price); //Esperasse que seja sempre o mesmo valor
                             messageNotification.AppendLine($"{acoes.Name}: {this._minValues[acoes.Name]:#,##0.00}");
@@ -271,11 +265,11 @@ namespace PriceMonitor
                         }
                     }
 
-                    if (count > 0)
-                        this.LoadBesteGateway(this._acoes);
+                    if (updateddAcoes.Count != this.AcoesCollections.Count)
+                        this.LoadBestGateway(this._acoes);
 
                     if (notifications > 0)
-                        callback_Nitification(notifications, messageNotification.ToString());
+                        callback_Notification(notifications, messageNotification.ToString());
 
                     Thread.Sleep(UPDATE_INTERVAL * 1000);
                 }
@@ -323,13 +317,13 @@ namespace PriceMonitor
                     {
                         RequestedDate = Convert.ToDateTime(splitedLine[1]),
                         Date = Convert.ToDateTime(splitedLine[2]),
-                        OppeningPrice = Convert.ToDecimal(splitedLine[3]),
-                        Price = Convert.ToDecimal(splitedLine[4]),
-                        MinimunPrice = Convert.ToDecimal(string.IsNullOrEmpty(splitedLine[5]) ? "0" : splitedLine[5]),
-                        MaximunPrice = Convert.ToDecimal(string.IsNullOrEmpty(splitedLine[6]) ? "0" : splitedLine[6]),
-                        AveragePrice = Convert.ToDecimal(string.IsNullOrEmpty(splitedLine[7]) ? "0" : splitedLine[7]),
-                        Volume = Convert.ToDecimal(string.IsNullOrEmpty(splitedLine[8]) ? "0" : splitedLine[8]),
-                        ClosedPrice = Convert.ToDecimal(string.IsNullOrEmpty(splitedLine[9]) ? "0" : splitedLine[9])
+                        OppeningPrice = splitedLine[3].ToDecimal(),
+                        Price = splitedLine[4].ToDecimal(),
+                        MinimunPrice = splitedLine[5].ToDecimal(),
+                        MaximunPrice = splitedLine[6].ToDecimal(),
+                        AveragePrice = splitedLine[7].ToDecimal(),
+                        Volume = splitedLine[8].ToDecimal(),
+                        ClosedPrice = splitedLine[9].ToDecimal()
                     });
                 }
 
@@ -384,7 +378,7 @@ namespace PriceMonitor
 
                     using (var sr = new StreamReader(response.GetResponseStream(), encoding))
                     {
-                        if(sr.BaseStream.CanTimeout)
+                        if (sr.BaseStream.CanTimeout)
                             sr.BaseStream.ReadTimeout = 5000;
 
                         htmlSource = sr.ReadToEnd();
