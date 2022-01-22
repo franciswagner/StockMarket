@@ -191,12 +191,6 @@ namespace StockMarket
             this.Day.HeaderText = "Dia " + DateTime.Now.ToString("dd/MM/yyyy");
         }
 
-        private void UpdateTabsPage(List<AcoesCollection> acoesCollections, List<TabPage> tabPagesControlList)
-        {
-            foreach (var tabPageControl in tabPagesControlList.Where(x => x.Visible))
-                ((PriceMonitorControl)tabPageControl.Controls[0]).UpdateControl(acoesCollections);
-        }
-
         #endregion
 
         #region Static Methods
@@ -205,6 +199,12 @@ namespace StockMarket
         {
             if (!Directory.Exists("DataFiles"))
                 Directory.CreateDirectory("DataFiles");
+        }
+
+        private static void UpdateTabsPage(List<AcoesCollection> acoesCollections, List<TabPage> tabPagesControlList)
+        {
+            foreach (var tabPageControl in tabPagesControlList.Where(x => x.Visible))
+                ((PriceMonitorControl)tabPageControl.Controls[0]).UpdateControl(acoesCollections);
         }
 
         #endregion
