@@ -245,7 +245,9 @@ namespace PriceMonitor
             if (!string.IsNullOrEmpty(errorMessage))
                 callback_Error(errorMessage);
 
-            callback(this.AcoesCollections);
+
+            if (this.AcoesCollections != null && this.AcoesCollections.Any())
+                callback(this.AcoesCollections);
 
             var messageNotification = new StringBuilder();
 

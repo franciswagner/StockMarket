@@ -80,76 +80,27 @@ namespace StockMarket
                 {
                     this._webMonitor.Run((List<AcoesCollection> acoesCollections) =>
                     {
-                        if (acoesCollections == null || !acoesCollections.Any())
-                            return;
-
                         this.Invoke(new Action(() =>
                         {
                             this.UpdateAbstract(acoesCollections);
-
-                            foreach (var tabPageControl in tabPagesControlList.Where(x => x.Visible))
-                                ((PriceMonitorControl)tabPageControl.Controls[0]).UpdateControl(acoesCollections);
+                            this.UpdateTabsPage(acoesCollections, tabPagesControlList);
                         }));
                     },
                     () => // Callback mercado aberto
                     {
-                        this.Invoke(new Action(() =>
-                        {
-                            if (this._marketOpenNotify)
-                            {
-                                this._marketOpenNotify = false;
-                                this._marketClosedNotify = true;
-                                this.ntiTrayIcon.BalloonTipTitle = "Mercado aberto";
-                                this.ntiTrayIcon.BalloonTipText = "Mercado aberto";
-                                this.ntiTrayIcon.ShowBalloonTip(10000);
-                            }
-
-                            this.tstStatusIcon.Image = Resources.alert_green;
-                            this.tstStatusIcon.ToolTipText = "Mercado aberto";
-                        }));
+                        this.Invoke(new Action(NotifyMarketOpen));
                     },
                     () => // Callback mercado fechado
                     {
-                        this.Invoke(new Action(() =>
-                        {
-                            if (this._marketClosedNotify)
-                            {
-                                this._marketClosedNotify = false;
-                                this._marketOpenNotify = true;
-                                this.ntiTrayIcon.BalloonTipTitle = "Mercado fechado";
-                                this.ntiTrayIcon.BalloonTipText = "Mercado fechado";
-                                this.ntiTrayIcon.ShowBalloonTip(10000);
-                            }
-
-                            this.tstStatusIcon.Image = Resources.alert_orange;
-                            this.tstStatusIcon.ToolTipText = $"Mercado fechado ({WebMonitor.MARKET_OPENING:HH:mm}-{WebMonitor.MARKET_CLOSING:HH:mm})";
-                        }));
+                        this.Invoke(new Action(NotifyClosedMarket));
                     },
                     (message) => // Callback erro na comunicação
                     {
-                        if (this._marketOpenNotify)
-                        {
-                            this._marketOpenNotify = false;
-                            this._marketClosedNotify = true;
-                            this.ntiTrayIcon.BalloonTipTitle = "Mercado aberto";
-                            this.ntiTrayIcon.BalloonTipText = "Mercado aberto";
-                            this.ntiTrayIcon.ShowBalloonTip(10000);
-                        }
-
-                        this.Invoke(new Action(() =>
-                        {
-                            this.tstStatusIcon.Image = Resources.alert_red;
-                            this.tstStatusIcon.ToolTipText = message;
-                        }));
+                        this.Invoke(new Action(() => NotifyCommunicationError(message)));
                     },
                     (count, message) => // Callback notificação
                     {
-                        this.Invoke(new Action(() =>
-                        {
-                            this.ntiTrayIcon.BalloonTipTitle = $"Novo valor mínimo ({count})";
-                            this.ntiTrayIcon.BalloonTipText = message;
-                            this.ntiTrayIcon.ShowBalloonTip(10000);
-                        }));
+                        this.Invoke(new Action(() => NotifyNewMinimunValue(count, message)));
                     });
                 }
             }, cancellationToken.Token);
@@ -169,6 +120,58 @@ namespace StockMarket
             this.dgvAbstract.DataSource = this._table;
         }
 
+        private void NotifyClosedMarket()
+        {
+            if (this._marketClosedNotify)
+            {
+                this._marketClosedNotify = false;
+                this._marketOpenNotify = true;
+                this.ntiTrayIcon.BalloonTipTitle = "Mercado fechado";
+                this.ntiTrayIcon.BalloonTipText = "Mercado fechado";
+                this.ntiTrayIcon.ShowBalloonTip(10000);
+            }
+
+            this.tstStatusIcon.Image = Resources.alert_orange;
+            this.tstStatusIcon.ToolTipText = $"Mercado fechado ({WebMonitor.MARKET_OPENING:HH:mm}-{WebMonitor.MARKET_CLOSING:HH:mm})";
+        }
+
+        private void NotifyCommunicationError(string message)
+        {
+            if (this._marketOpenNotify)
+            {
+                this._marketOpenNotify = false;
+                this._marketClosedNotify = true;
+                this.ntiTrayIcon.BalloonTipTitle = "Mercado aberto";
+                this.ntiTrayIcon.BalloonTipText = "Mercado aberto";
+                this.ntiTrayIcon.ShowBalloonTip(10000);
+            }
+
+            this.tstStatusIcon.Image = Resources.alert_red;
+            this.tstStatusIcon.ToolTipText = message;
+        }
+
+        private void NotifyMarketOpen()
+        {
+            if (this._marketOpenNotify)
+            {
+                this._marketOpenNotify = false;
+                this._marketClosedNotify = true;
+                this.ntiTrayIcon.BalloonTipTitle = "Mercado aberto";
+                this.ntiTrayIcon.BalloonTipText = "Mercado aberto";
+                this.ntiTrayIcon.ShowBalloonTip(10000);
+            }
+
+            this.tstStatusIcon.Image = Resources.alert_green;
+            this.tstStatusIcon.ToolTipText = "Mercado aberto";
+        }
+
+        private void NotifyNewMinimunValue(int count, string message)
+        {
+            this.ntiTrayIcon.BalloonTipTitle = $"Novo valor mínimo ({count})";
+            this.ntiTrayIcon.BalloonTipText = message;
+            this.ntiTrayIcon.ShowBalloonTip(10000);
+        }
+
         private void UpdateAbstract(List<AcoesCollection> acoesCollections)
         {
             if (acoesCollections == null || !acoesCollections.Any())
@@ -186,6 +189,12 @@ namespace StockMarket
             }
 
             this.Day.HeaderText = "Dia " + DateTime.Now.ToString("dd/MM/yyyy");
+        }
+
+        private void UpdateTabsPage(List<AcoesCollection> acoesCollections, List<TabPage> tabPagesControlList)
+        {
+            foreach (var tabPageControl in tabPagesControlList.Where(x => x.Visible))
+                ((PriceMonitorControl)tabPageControl.Controls[0]).UpdateControl(acoesCollections);
         }
 
         #endregion
