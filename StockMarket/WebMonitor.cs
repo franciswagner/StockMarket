@@ -194,9 +194,7 @@ namespace PriceMonitor
 
         private string RequestJson(string url)
         {
-            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls
-                | SecurityProtocolType.Tls11
-                | SecurityProtocolType.Tls12;
+            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12 | SecurityProtocolType.Tls13;
 
             var uri = new Uri(url);
 
