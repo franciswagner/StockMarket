@@ -83,7 +83,7 @@ namespace StockMarket
                         this.Invoke(new Action(() =>
                         {
                             this.UpdateAbstract(acoesCollections);
-                            this.UpdateTabsPage(acoesCollections, tabPagesControlList);
+                            UpdateTabsPage(acoesCollections, tabPagesControlList);
                         }));
                     },
                     () => // Callback mercado aberto
