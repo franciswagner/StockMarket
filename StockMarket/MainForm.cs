@@ -1,14 +1,13 @@
-﻿using System;
-using System.CodeDom;
+﻿using PriceMonitor;
+using StockMarket.Properties;
+using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Windows.Forms;
-using PriceMonitor;
-using StockMarket.Properties;
-using System.ComponentModel;
 
 namespace StockMarket
 {
@@ -19,6 +18,8 @@ namespace StockMarket
         public MainForm()
         {
             this.InitializeComponent();
+
+            this.CreateRootFolder();
 
             if (!string.IsNullOrWhiteSpace(Configs.Acoes))
                 this._acoes = Configs.Acoes.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
@@ -42,6 +43,12 @@ namespace StockMarket
         #endregion
 
         #region Private Methods
+
+        private void CreateRootFolder()
+        {
+            if (!Directory.Exists("DataFiles"))
+                Directory.CreateDirectory("DataFiles");
+        }
 
         private List<TabPage> CreateTabsControls()
         {
@@ -78,13 +85,8 @@ namespace StockMarket
                 {
                     this.UpdateAbstract(acoesCollections);
 
-                    foreach (var tabPageControl in tabPagesControlList)
-                    {
-                        if (!tabPageControl.Visible)
-                            continue;
-
+                    foreach (var tabPageControl in tabPagesControlList.Where(x => x.Visible))
                         ((PriceMonitorControl)tabPageControl.Controls[0]).UpdateControl(acoesCollections);
-                    }
                 }));
             },
             () => // Callback mercado aberto
@@ -302,7 +304,7 @@ namespace StockMarket
 
         private void dgvAbstract_CellPainting(object sender, DataGridViewCellPaintingEventArgs e)
         {
-            if (e.RowIndex == -1 || e.ColumnIndex == 3 || e.ColumnIndex == 4) //|| e.ColumnIndex < 5 || e.ColumnIndex > 22)
+            if (e.RowIndex.IsAnyOfThese(-1, 3, 4))
                 return;
 
             this.dgvAbstract.CellPainting -= dgvAbstract_CellPainting;
@@ -318,11 +320,8 @@ namespace StockMarket
                 var valueCell = cell.Value;
 
                 var rowObj = (AbstractRow)row.DataBoundItem;
-                if (Convert.ToDecimal(valueCell) < Convert.ToDecimal(rowObj.Closing))
-                {
-                    if (cellColor != Color.Red)
-                        cell.Style.ForeColor = Color.Red;
-                }
+                if (Convert.ToDecimal(valueCell) < Convert.ToDecimal(rowObj.Closing) && cellColor != Color.Red)
+                    cell.Style.ForeColor = Color.Red;
                 else if (Convert.ToDecimal(valueCell) > Convert.ToDecimal(rowObj.Closing) && cellColor != Color.Green)
                     cell.Style.ForeColor = Color.Green;
             }
@@ -330,11 +329,8 @@ namespace StockMarket
             {
                 var valueCell = cell.Value.ToString();
 
-                if (valueCell.StartsWith("-"))
-                {
-                    if (cellColor != Color.Red)
-                        cell.Style.ForeColor = Color.Red;
-                }
+                if (valueCell.StartsWith("-") && cellColor != Color.Red)
+                    cell.Style.ForeColor = Color.Red;
                 else if (valueCell != "0,00" && cellColor != Color.Green)
                     cell.Style.ForeColor = Color.Green;
             }

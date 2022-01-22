@@ -1,10 +1,6 @@
 ﻿using PriceMonitor;
 using System;
-using System.Collections.Generic;
 using System.ComponentModel;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace StockMarket
 {
@@ -116,69 +112,14 @@ namespace StockMarket
             var month = this.RequestedDate.Month;
             var year = this.RequestedDate.Year;
 
-            var refDate = new DateTime(year, month, day, 10, 30, 00);
-            if (this.RequestedDate <= refDate && this.RequestedDate > refDate.AddMinutes(-30))
-                return "Time1030";
+            var refDate = new DateTime(year, month, day, 10, 00, 00);
+            for (var i = 0; i < 17; i++) // from 10:30 to 18:00
+            {
+                refDate = refDate.AddMinutes(30);
 
-            refDate = new DateTime(year, month, day, 11, 00, 00);
-            if (this.RequestedDate <= refDate && this.RequestedDate > refDate.AddMinutes(-30))
-                return "Time1100";
-            
-            refDate = new DateTime(year, month, day, 11, 30, 00);
-            if (this.RequestedDate <= refDate && this.RequestedDate > refDate.AddMinutes(-30))
-                return "Time1130";
-            
-            refDate = new DateTime(year, month, day, 12, 00, 00);
-            if (this.RequestedDate <= refDate && this.RequestedDate > refDate.AddMinutes(-30))
-                return "Time1200";
-            
-            refDate = new DateTime(year, month, day, 12, 30, 00);
-            if (this.RequestedDate <= refDate && this.RequestedDate > refDate.AddMinutes(-30))
-                return "Time1230";
-            
-            refDate = new DateTime(year, month, day, 13, 00, 00);
-            if (this.RequestedDate <= refDate && this.RequestedDate > refDate.AddMinutes(-30))
-                return "Time1300";
-            
-            refDate = new DateTime(year, month, day, 13, 30, 00);
-            if (this.RequestedDate <= refDate && this.RequestedDate > refDate.AddMinutes(-30))
-                return "Time1330";
-            
-            refDate = new DateTime(year, month, day, 14, 00, 00);
-            if (this.RequestedDate <= refDate && this.RequestedDate > refDate.AddMinutes(-30))
-                return "Time1400";
-            
-            refDate = new DateTime(year, month, day, 14, 30, 00);
-            if (this.RequestedDate <= refDate && this.RequestedDate > refDate.AddMinutes(-30))
-                return "Time1430";
-            
-            refDate = new DateTime(year, month, day, 15, 00, 00);
-            if (this.RequestedDate <= refDate && this.RequestedDate > refDate.AddMinutes(-30))
-                return "Time1500";
-            
-            refDate = new DateTime(year, month, day, 15, 30, 00);
-            if (this.RequestedDate <= refDate && this.RequestedDate > refDate.AddMinutes(-30))
-                return "Time1530";
-            
-            refDate = new DateTime(year, month, day, 16, 00, 00);
-            if (this.RequestedDate <= refDate && this.RequestedDate > refDate.AddMinutes(-30))
-                return "Time1600";
-            
-            refDate = new DateTime(year, month, day, 16, 30, 00);
-            if (this.RequestedDate <= refDate && this.RequestedDate > refDate.AddMinutes(-30))
-                return "Time1630";
-            
-            refDate = new DateTime(year, month, day, 17, 00, 00);
-            if (this.RequestedDate <= refDate && this.RequestedDate > refDate.AddMinutes(-30))
-                return "Time1700";
-            
-            refDate = new DateTime(year, month, day, 17, 30, 00);
-            if (this.RequestedDate <= refDate && this.RequestedDate > refDate.AddMinutes(-30))
-                return "Time1730";
-            
-            refDate = new DateTime(year, month, day, 18, 00, 00);
-            if (this.RequestedDate <= refDate && this.RequestedDate > refDate.AddMinutes(-30))
-                return "Time1800";
+                if (this.RequestedDate <= refDate && this.RequestedDate > refDate.AddMinutes(-30))
+                    return $"Time{refDate:HHmm}";
+            }
 
             return string.Empty;
         }

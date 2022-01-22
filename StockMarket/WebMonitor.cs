@@ -2,6 +2,7 @@
 using StockMarket;
 using System;
 using System.Collections.Generic;
+using System.Configuration;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -44,7 +45,6 @@ namespace PriceMonitor
         #region Private Fields
 
         private string _url;
-        private readonly string _urlTemplate = "https://{0}.easynvest.com.br/iwg/snapshot/?t=webgateway&c=9999999&q="; //5602719
         private readonly string[] _acoes;
         private readonly string[] _gateways = { "mdgateway", "mdgateway01", "mdgateway02", "mdgateway03", "mdgateway04", "mdgateway06" };
         private readonly Dictionary<string, decimal> _minValues = new Dictionary<string, decimal>();
@@ -99,9 +99,6 @@ namespace PriceMonitor
 
         private List<AcoesCollection> LoadFromFile()
         {
-            if (!Directory.Exists("DataFiles"))
-                Directory.CreateDirectory("DataFiles");
-
             var acoesMonitorList = new List<AcoesCollection>();
 
             foreach (var file in Directory.EnumerateFiles("DataFiles"))
@@ -123,21 +120,9 @@ namespace PriceMonitor
                         if (!line.Contains(";"))
                             continue;
 
-
-                        var coulumns = line.Count(x => x == ';');
-                        if (coulumns != 9)
-                        {
-                            var sbLine = new StringBuilder();
-                            sbLine.Append(line);
-
-                            while (coulumns < 9)
-                            {
-                                coulumns++;
-                                sbLine.Append(";");
-                            }
-
-                            line = sbLine.ToString();
-                        }
+                        var columns = line.Count(x => x == ';');
+                        if (columns < 9)
+                            line = string.Concat(line, new string(';', 9 - columns));
 
                         var splitedLine = line.Split(';');
 
@@ -177,11 +162,12 @@ namespace PriceMonitor
 
         private void LoadBesteGateway(string[] acoes)
         {
+            var urlGatewayemplate = ConfigurationManager.AppSettings["UrlGatewayTemplate"];
 
             var bestCount = 0;
             foreach (var gateway in this._gateways)
             {
-                var url = string.Format(this._urlTemplate, gateway);
+                var url = string.Format(urlGatewayemplate, gateway);
 
                 var sbUrl = new StringBuilder();
                 sbUrl.Append(url);
@@ -195,7 +181,7 @@ namespace PriceMonitor
                 url = sbUrl.ToString().Trim('|');
 
                 int count;
-                if (this.TestGateway(url, out count) && count > bestCount)
+                if (TestGateway(url, out count) && count > bestCount)
                 {
                     bestCount = count;
                     this._url = url;
@@ -205,30 +191,6 @@ namespace PriceMonitor
                 }
             }
         }
-
-        private bool TestGateway(string url, out int count)
-        {
-            var json = RequestJson(url);
-
-            if (string.IsNullOrWhiteSpace(json))
-            {
-                count = 0;
-                return false;
-            }
-
-            var acoesJsonReader = DeserializeJson(json);
-
-            var validCount = acoesJsonReader.Value.Count(x => x.Ps.P != 0 && x.Ps.OP != 0 && x.Ps.CP != 0);
-            if (validCount != 0)
-            {
-                count = validCount;
-                return true;
-            }
-
-            count = 0;
-            return false;
-        }
-
         #endregion
 
         #region Public Methods
@@ -253,20 +215,9 @@ namespace PriceMonitor
                         if (string.IsNullOrEmpty(line))
                             break;
 
-                        var coulumns = line.Count(x => x == ';');
-                        if (coulumns != 9)
-                        {
-                            var sbLine = new StringBuilder();
-                            sbLine.Append(line);
-
-                            while (coulumns < 9)
-                            {
-                                coulumns++;
-                                sbLine.Append(";");
-                            }
-
-                            line = sbLine.ToString();
-                        }
+                        var columns = line.Count(x => x == ';');
+                        if (columns < 9)
+                            line = string.Concat(line, new string(';', 9 - columns));
 
                         var splitedLine = line.Split(';');
 
@@ -324,11 +275,8 @@ namespace PriceMonitor
                         //Retesta os gateways
                         this.LoadBesteGateway(this._acoes);
 
-                        if (string.IsNullOrEmpty(this._url))
-                        {
-                            Thread.Sleep(60000);
-                            continue;
-                        }
+                        Thread.Sleep(60000);
+                        continue;
                     }
 
                     var currentGateway = new Uri(this._url).Host;
@@ -514,6 +462,30 @@ namespace PriceMonitor
                     acao.Volume + spliter +
                     acao.ClosedPrice);
         }
+
+        private static bool TestGateway(string url, out int count)
+        {
+            var json = RequestJson(url);
+
+            if (string.IsNullOrWhiteSpace(json))
+            {
+                count = 0;
+                return false;
+            }
+
+            var acoesJsonReader = DeserializeJson(json);
+
+            var validCount = acoesJsonReader.Value.Count(x => x.Ps.P != 0 && x.Ps.OP != 0 && x.Ps.CP != 0);
+            if (validCount != 0)
+            {
+                count = validCount;
+                return true;
+            }
+
+            count = 0;
+            return false;
+        }
+
 
         #endregion
     }
