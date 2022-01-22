@@ -1,18 +1,14 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using StockMarket;
+using System;
 using System.Collections.Generic;
-using System.Configuration;
-using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net;
 using System.Text;
-using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Web;
 using System.Windows.Forms;
-using Newtonsoft.Json;
-using StockMarket;
 
 namespace PriceMonitor
 {
@@ -25,20 +21,12 @@ namespace PriceMonitor
 
         public static DateTime MARKET_OPENING
         {
-            get
-            {
-                return DateTime.Today + Configs.Opening;
-                //return new DateTime(DateTime.Now.Year, DateTime.Now.Month, DateTime.Now.Day, 10, 04, 00);
-            }
+            get { return DateTime.Today + Configs.Opening; }
         }
 
         public static DateTime MARKET_CLOSING
         {
-            get
-            {
-                return DateTime.Today + Configs.Closing;
-                //return new DateTime(DateTime.Now.Year, DateTime.Now.Month, DateTime.Now.Day, 18, 00, 00);
-            }
+            get { return DateTime.Today + Configs.Closing; }
         }
 
         #endregion
@@ -56,10 +44,10 @@ namespace PriceMonitor
         #region Private Fields
 
         private string _url;
-        private string _urlTemplate = "https://{0}.easynvest.com.br/iwg/snapshot/?t=webgateway&c=9999999&q="; //5602719
-        private string[] _acoes;
-        private string[] _gateways = { "mdgateway", "mdgateway01", "mdgateway02", "mdgateway03", "mdgateway04", "mdgateway06" };
-        private Dictionary<string, decimal> _minValues = new Dictionary<string, decimal>();
+        private readonly string _urlTemplate = "https://{0}.easynvest.com.br/iwg/snapshot/?t=webgateway&c=9999999&q="; //5602719
+        private readonly string[] _acoes;
+        private readonly string[] _gateways = { "mdgateway", "mdgateway01", "mdgateway02", "mdgateway03", "mdgateway04", "mdgateway06" };
+        private readonly Dictionary<string, decimal> _minValues = new Dictionary<string, decimal>();
 
         #endregion
 
@@ -93,7 +81,7 @@ namespace PriceMonitor
             }
         }
 
-        public bool IsMarketOpened
+        public static bool IsMarketOpened
         {
             get
             {
@@ -135,13 +123,21 @@ namespace PriceMonitor
                         if (!line.Contains(";"))
                             continue;
 
+
                         var coulumns = line.Count(x => x == ';');
                         if (coulumns != 9)
+                        {
+                            var sbLine = new StringBuilder();
+                            sbLine.Append(line);
+
                             while (coulumns < 9)
                             {
                                 coulumns++;
-                                line = line + ";";
+                                sbLine.Append(";");
                             }
+
+                            line = sbLine.ToString();
+                        }
 
                         var splitedLine = line.Split(';');
 
@@ -168,7 +164,7 @@ namespace PriceMonitor
                     //30 min X max points
                     var max = MAX_CANDLES_IN_GRAPH * Configs.CandlePeriod;
 
-                    if (acoes.Acoes.Count() > max)
+                    if (acoes.Acoes.Count > max)
                         acoes.Acoes = acoes.Acoes.TakeLast(max).ToList();
 
                     acoesMonitorList.Add(acoes);
@@ -176,93 +172,6 @@ namespace PriceMonitor
             }
 
             return acoesMonitorList;
-        }
-
-        private AcoesJsonReaderPriceCollection DeserializeJson(string json)
-        {
-            try
-            {
-                var teste = JsonConvert.DeserializeObject<AcoesJsonReaderPriceCollection>(json);
-                return teste;
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(ex.ToString(), "WTF Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                throw ex;
-            }
-        }
-
-        private string RequestJson(string url)
-        {
-            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12 | SecurityProtocolType.Tls13;
-
-            var uri = new Uri(url);
-
-            var request = (HttpWebRequest)WebRequest.Create(uri);
-            request.Method = "GET";
-            request.Accept = "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8";
-            request.UserAgent = "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:36.0) Gecko/20100101 Firefox/36.0";
-            //request.KeepAlive = true;
-            //request.Timeout = 10000;
-            request.Headers.Add("Accept-Language", "pt-BR,pt;q=0.8,en-US;q=0.5,en;q=0.3");
-            request.Headers.Add("Upgrade-Insecure-Requests", "1");
-            request.Headers.Add("Pragma", "no-cache");
-            request.Headers.Add("Cache-Control", "no-cache");
-
-            try
-            {
-                var htmlSource = string.Empty;
-                var response = (HttpWebResponse)request.GetResponse();
-
-                try
-                {
-                    Encoding encoding;
-                    if (response.ContentType.ToLower().Contains("utf-8"))
-                        encoding = Encoding.UTF8;
-                    else
-                        encoding = Encoding.GetEncoding("ISO-8859-1");
-
-                    using (var sr = new StreamReader(response.GetResponseStream(), encoding))
-                    {
-                        sr.BaseStream.ReadTimeout = 5000;
-                        htmlSource = sr.ReadToEnd();
-
-                        return htmlSource;
-                    }
-                }
-                catch (Exception ex)
-                {
-                    //MessageBox.Show("Falha ao buscar os dados.", "WTFMonitor", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    //Thread.Sleep(60000);
-                    return string.Empty;
-                }
-            }
-            catch (Exception ex)
-            {
-                //MessageBox.Show("Falha ao buscar os dados.", "WTFMonitor", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                //Thread.Sleep(60000);
-                return string.Empty;
-            }
-        }
-
-        private void SaveToFile(string name, Acao acao)
-        {
-            if (!Directory.Exists("DataFiles"))
-                Directory.CreateDirectory("DataFiles");
-
-            var spliter = ";";
-            using (var sw = new StreamWriter(Path.Combine("DataFiles", name + ".txt"), true))
-                sw.WriteLine(
-                    name + spliter +
-                    acao.RequestedDate + spliter +
-                    acao.Date + spliter +
-                    acao.OppeningPrice + spliter +
-                    acao.Price + spliter +
-                    acao.MinimunPrice + spliter +
-                    acao.MaximunPrice + spliter +
-                    acao.AveragePrice + spliter +
-                    acao.Volume + spliter +
-                    acao.ClosedPrice);
         }
 
 
@@ -274,10 +183,16 @@ namespace PriceMonitor
             {
                 var url = string.Format(this._urlTemplate, gateway);
 
-                foreach (var acao in acoes)
-                    url += acao + ",1,0|";
+                var sbUrl = new StringBuilder();
+                sbUrl.Append(url);
 
-                url = url.Trim('|');
+                foreach (var acao in acoes)
+                {
+                    sbUrl.Append(acao);
+                    sbUrl.Append(",1,0|");
+                }
+
+                url = sbUrl.ToString().Trim('|');
 
                 int count;
                 if (this.TestGateway(url, out count) && count > bestCount)
@@ -293,7 +208,7 @@ namespace PriceMonitor
 
         private bool TestGateway(string url, out int count)
         {
-            var json = this.RequestJson(url);
+            var json = RequestJson(url);
 
             if (string.IsNullOrWhiteSpace(json))
             {
@@ -301,7 +216,7 @@ namespace PriceMonitor
                 return false;
             }
 
-            var acoesJsonReader = this.DeserializeJson(json);
+            var acoesJsonReader = DeserializeJson(json);
 
             var validCount = acoesJsonReader.Value.Count(x => x.Ps.P != 0 && x.Ps.OP != 0 && x.Ps.CP != 0);
             if (validCount != 0)
@@ -340,11 +255,18 @@ namespace PriceMonitor
 
                         var coulumns = line.Count(x => x == ';');
                         if (coulumns != 9)
+                        {
+                            var sbLine = new StringBuilder();
+                            sbLine.Append(line);
+
                             while (coulumns < 9)
                             {
                                 coulumns++;
-                                line = line + ";";
+                                sbLine.Append(";");
                             }
+
+                            line = sbLine.ToString();
+                        }
 
                         var splitedLine = line.Split(';');
 
@@ -371,7 +293,7 @@ namespace PriceMonitor
                     //30 min X max points
                     var max = MAX_CANDLES_IN_GRAPH * Configs.CandlePeriod;
 
-                    if (acoes.Acoes.Count() > max)
+                    if (acoes.Acoes.Count > max)
                         acoes.Acoes = acoes.Acoes.TakeLast(max).ToList();
 
                     acoesMonitorList.Add(acoes);
@@ -385,40 +307,15 @@ namespace PriceMonitor
         {
             Task.Run(() =>
             {
-                //callback(this.AcoesCollections);
-
-                //if (this.AcoesCollections.Any(x => !this._acoes.Contains(x.Name)))
-                //    callback_Error("Nem todas as ações foram atualizadas.");
-                //else
-                //{
-                //    if (this.IsMarketOpened)
-                //        callback_OpenedMarket();
-                //    else
-                //        callback_ClosedMarket();
-                //}
-
                 while (true)
                 {
-                    //var lastMonitor = acoesMonitorList != null && acoesMonitorList.Any() ? acoesMonitorList[0].Acoes?.LastOrDefault() : null;
-
-                    //var now = DateTime.Now;
-
                     // Verifica se o mercado esta aberto
-                    if (!this.IsMarketOpened)
+                    if (!IsMarketOpened)
                     {
                         callback_ClosedMarket();
                         Thread.Sleep(60000);
                         continue;
                     }
-
-                    // Verifica se capturou o valor da acão na última hora
-                    //if (lastMonitor != null &&
-                    //    lastMonitor.RequestedDate.Year == now.Year && lastMonitor.RequestedDate.Month == now.Month &&
-                    //    lastMonitor.RequestedDate.Day == now.Day && lastMonitor.RequestedDate.Hour == now.Hour)
-                    //{
-                    //    Thread.Sleep(60000);
-                    //    continue;
-                    //}
 
                     if (string.IsNullOrEmpty(this._url))
                     {
@@ -437,7 +334,7 @@ namespace PriceMonitor
                     var currentGateway = new Uri(this._url).Host;
                     currentGateway = currentGateway.Substring(0, currentGateway.IndexOf("."));
 
-                    var json = this.RequestJson(this._url);
+                    var json = RequestJson(this._url);
 
                     if (string.IsNullOrWhiteSpace(json))
                     {
@@ -450,20 +347,14 @@ namespace PriceMonitor
                         continue;
                     }
 
-                    this.RecordDumpFile(json);
-
-                    var acoesJsonReader = this.DeserializeJson(json);
+                    var acoesJsonReader = DeserializeJson(json);
 
                     var errorMessage = string.Empty;
 
                     if (acoesJsonReader.Value.Count == this._acoes.Length)
                         callback_OpenedMarket();
                     else
-                    {
                         errorMessage = $"A URL designada não retornou todos os dados solicitados ({currentGateway}).\r\n    Apenas {acoesJsonReader.Value.Count} de {this._acoes.Length}.";
-                        //Thread.Sleep(60000);
-                        //continue;
-                    }
 
                     DateTime? lastDate = null;
 
@@ -483,7 +374,7 @@ namespace PriceMonitor
                                 continue;
                             }
 
-                            this.SaveToFile(name, acao);
+                            SaveToFile(name, acao);
 
                             var acoesMonitor = this.AcoesCollections.FirstOrDefault(x => x.Name == name);
                             if (acoesMonitor != null)
@@ -504,11 +395,9 @@ namespace PriceMonitor
                     if (!string.IsNullOrEmpty(errorMessage))
                         callback_Error(errorMessage);
 
-                    //acoesMonitorList.Add(acoesMonitor);
-
                     callback(this.AcoesCollections);
 
-                    var messageNotification = string.Empty;
+                    var messageNotification = new StringBuilder();
                     var notifications = 0;
                     var count = 0;
 
@@ -525,7 +414,7 @@ namespace PriceMonitor
                         if (this._minValues[acoes.Name] != 0 && (last.MinimunPrice < this._minValues[acoes.Name] || last.Price <= this._minValues[acoes.Name]))
                         {
                             this._minValues[acoes.Name] = Math.Min(last.MinimunPrice, last.Price); //Esperasse que seja sempre o mesmo valor
-                            messageNotification += acoes.Name + ": " + this._minValues[acoes.Name].ToString("#,##0.00") + Environment.NewLine;
+                            messageNotification.AppendLine($"{acoes.Name}: {this._minValues[acoes.Name]:#,##0.00}");
                             notifications++;
                         }
                     }
@@ -534,22 +423,96 @@ namespace PriceMonitor
                         this.LoadBesteGateway(this._acoes);
 
                     if (notifications > 0)
-                        callback_Nitification(notifications, messageNotification);
+                        callback_Nitification(notifications, messageNotification.ToString());
 
                     Thread.Sleep(UPDATE_INTERVAL * 1000);
                 }
             });
         }
 
-        private void RecordDumpFile(string json)
+        #endregion
+
+        #region Static Methods
+
+        private static AcoesJsonReaderPriceCollection DeserializeJson(string json)
         {
-            return;
+            try
+            {
+                var teste = JsonConvert.DeserializeObject<AcoesJsonReaderPriceCollection>(json);
+                return teste;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.ToString(), "WTF Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                throw;
+            }
+        }
 
-            if (!Directory.Exists("temp"))
-                Directory.CreateDirectory("temp");
+        private static string RequestJson(string url)
+        {
+            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12 | SecurityProtocolType.Tls13;
 
-            using (var sw = new StreamWriter(Path.Combine("temp", DateTime.Now.ToString("yyyyMMdd-HHmmss") + ".json")))
-                sw.Write(json);
+            var uri = new Uri(url);
+
+            var request = (HttpWebRequest)WebRequest.Create(uri);
+            request.Method = "GET";
+            request.Accept = "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8";
+            request.UserAgent = "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:36.0) Gecko/20100101 Firefox/36.0";
+            request.Headers.Add("Accept-Language", "pt-BR,pt;q=0.8,en-US;q=0.5,en;q=0.3");
+            request.Headers.Add("Upgrade-Insecure-Requests", "1");
+            request.Headers.Add("Pragma", "no-cache");
+            request.Headers.Add("Cache-Control", "no-cache");
+
+            try
+            {
+                var htmlSource = string.Empty;
+                var response = (HttpWebResponse)request.GetResponse();
+
+                try
+                {
+                    Encoding encoding;
+                    if (response.ContentType.ToLower().Contains("utf-8"))
+                        encoding = Encoding.UTF8;
+                    else
+                        encoding = Encoding.GetEncoding("ISO-8859-1");
+
+                    using (var sr = new StreamReader(response.GetResponseStream(), encoding))
+                    {
+                        sr.BaseStream.ReadTimeout = 5000;
+                        htmlSource = sr.ReadToEnd();
+
+                        return htmlSource;
+                    }
+                }
+                catch (Exception)
+                {
+                    return string.Empty;
+                }
+            }
+            catch
+            {
+                return string.Empty;
+            }
+        }
+
+        private static void SaveToFile(string name, Acao acao)
+        {
+            if (!Directory.Exists("DataFiles"))
+                Directory.CreateDirectory("DataFiles");
+
+            var spliter = ";";
+            using (var sw = new StreamWriter(Path.Combine("DataFiles", name + ".txt"), true))
+                sw.WriteLine(
+                    name + spliter +
+                    acao.RequestedDate + spliter +
+                    acao.Date + spliter +
+                    acao.OppeningPrice + spliter +
+                    acao.Price + spliter +
+                    acao.MinimunPrice + spliter +
+                    acao.MaximunPrice + spliter +
+                    acao.AveragePrice + spliter +
+                    acao.Volume + spliter +
+                    acao.ClosedPrice);
         }
 
         #endregion

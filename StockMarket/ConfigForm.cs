@@ -1,14 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Configuration;
-using System.Data;
 using System.Drawing;
-using System.IO;
-using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace StockMarket
@@ -66,7 +59,7 @@ namespace StockMarket
 
         private bool Save()
         {
-            if (!this.ValidateAcoes(this.txtAcoes.Text) || !this.ValidateTime(this.txtOpening.Text) || !this.ValidateTime(this.txtClosing.Text))
+            if (!ValidateAcoes(this.txtAcoes.Text) || !ValidateTime(this.txtOpening.Text) || !ValidateTime(this.txtClosing.Text))
             {
                 MessageBox.Show("Nem todos os campos são válidos", this.Text, MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return false;
@@ -92,22 +85,25 @@ namespace StockMarket
             return true;
         }
 
+        #endregion
 
-        private bool ValidateAcoes(string acoes)
+        #region Static Methods
+
+        private static bool ValidateAcoes(string acoes)
         {
             var regex = new Regex(@"(([A-Z]{4}[0-9]{0,2})[;]{0,1})", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Singleline);
 
-            var result = string.Empty;
+            var result = new StringBuilder();
             foreach (Match match in regex.Matches(acoes))
-                result += match.Value;
+                result.Append(match.Value);
 
-            if (acoes == result)
+            if (acoes == result.ToString())
                 return true;
             else
                 return false;
         }
 
-        private bool ValidateTime(string time)
+        private static bool ValidateTime(string time)
         {
             try
             {
@@ -141,7 +137,7 @@ namespace StockMarket
 
         private void txtAcoes_TextChanged(object sender, EventArgs e)
         {
-            if (this.ValidateAcoes(this.txtAcoes.Text))
+            if (ValidateAcoes(this.txtAcoes.Text))
                 this.txtAcoes.ForeColor = Color.Black;
             else
                 this.txtAcoes.ForeColor = Color.Red;
@@ -151,7 +147,7 @@ namespace StockMarket
 
         private void txtClosing_TextChanged(object sender, EventArgs e)
         {
-            if (this.ValidateTime(this.txtClosing.Text))
+            if (ValidateTime(this.txtClosing.Text))
                 this.txtClosing.ForeColor = Color.Black;
             else
                 this.txtClosing.ForeColor = Color.Red;
@@ -161,7 +157,7 @@ namespace StockMarket
 
         private void txtOpening_TextChanged(object sender, EventArgs e)
         {
-            if (this.ValidateTime(this.txtOpening.Text))
+            if (ValidateTime(this.txtOpening.Text))
                 this.txtOpening.ForeColor = Color.Black;
             else
                 this.txtOpening.ForeColor = Color.Red;

@@ -237,7 +237,7 @@ namespace StockMarket
             this.tsmClose.Name = "tsmClose";
             this.tsmClose.Size = new System.Drawing.Size(152, 22);
             this.tsmClose.Text = "Fechar";
-            this.tsmClose.Click += new System.EventHandler(this.tsmClose_Click);
+            this.tsmClose.Click += new System.EventHandler(this.tcmMenuClose_Click);
             // 
             // tstStatusIcon
             // 

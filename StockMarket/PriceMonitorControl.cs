@@ -1,14 +1,16 @@
-﻿using System.Collections.Generic;
+﻿using PriceMonitor;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
 using System.Windows.Forms.DataVisualization.Charting;
-using PriceMonitor;
 
 namespace StockMarket
 {
     public partial class PriceMonitorControl : UserControl
     {
+        #region Constructors
+
         public PriceMonitorControl()
         {
             this.InitializeComponent();
@@ -21,7 +23,54 @@ namespace StockMarket
             this.InitializeComponent();
         }
 
+        #endregion
+
+        #region Attributes and Properties
+
         public string Acao { get; }
+
+        #endregion
+
+        #region Static Methods
+
+        private static Series CreateCandleSeries(string name, bool showLegend)
+        {
+            var series = new Series(name);
+            series.ChartType = SeriesChartType.Candlestick;
+            series.BorderWidth = 2;
+            series.IsVisibleInLegend = showLegend;
+            series.ToolTip = "#VALX\n#VALY{F2}";
+
+            // Set the style of the open-close marks
+            series["OpenCloseStyle"] = "Triangle";
+
+            // Show both open and close marks
+            series["ShowOpenClose"] = "Both";
+
+            // Set point width
+            series["PointWidth"] = "0.7";
+
+            // Set colors bars
+            series["PriceUpColor"] = "Green"; // <<== use text indexer for series
+            series["PriceDownColor"] = "Red"; // <<== use text indexer for series
+
+            return series;
+        }
+
+        private static Series CreateColumnSeries(string name, bool showLegend)
+        {
+            var series = new Series(name);
+            series.ChartType = SeriesChartType.Column;
+            series.BorderWidth = 2;
+            series.IsVisibleInLegend = showLegend;
+            series.ToolTip = "#VALX\n#VALY{F2}";
+
+            return series;
+        }
+
+        #endregion
+
+        #region Public Methods
 
         public void UpdateControl(List<AcoesCollection> acoesCollections)
         {
@@ -47,26 +96,24 @@ namespace StockMarket
                 return stamp.ToString();
             })
             .Select(g => new { TimeStamp = g.Key, Value = g.ToList() })
-            //.TakeLast(50)
             .ToList();
 
-            //var groupsDictionary = groups.TakeLast(WebMonitor.MAX_CANDLES_IN_GRAPH).ToList().ToDictionary(x => x.TimeStamp, x => x.Value);
             groups = groups.TakeLastObject(WebMonitor.MAX_CANDLES_IN_GRAPH).ToList();
 
             #region Coulumn Series
 
-            var columnSeries = this.CreateColumnSeries("Volume", false);
+            var columnSeries = CreateColumnSeries("Volume", false);
             columnSeries.Color = Color.Blue;
 
             this.chtVolumeChart.Series.Add(columnSeries);
             this.chtVolumeChart.ChartAreas[0].AxisY.LabelStyle.Format = "{0:0,,}M";
 
-            foreach (var group in groups)
+            foreach (var value in groups.Select(group => group.Value))
             {
-                var first = group.Value.OrderBy(x => x.RequestedDate).First().Volume;
-                var last = group.Value.OrderBy(x => x.RequestedDate).Last().Volume;
+                var first = value.OrderBy(x => x.RequestedDate).First().Volume;
+                var last = value.OrderBy(x => x.RequestedDate).Last().Volume;
                 var volume = last - first;
-                var date = group.Value.OrderBy(x => x.RequestedDate).Last().RequestedDate;
+                var date = value.OrderBy(x => x.RequestedDate).Last().RequestedDate;
 
                 columnSeries.Points.AddXY(date.ToString("dd/MM/yyyy HH:mm"), volume);
             }
@@ -75,19 +122,12 @@ namespace StockMarket
 
             #region Candle Series
 
-            var lineSeries = this.CreateCandleSeries("price", false);
+            var lineSeries = CreateCandleSeries("price", false);
             this.chtChart.Series.Add(lineSeries);
 
             this.chtChart.ChartAreas[0].AxisX.IsMarginVisible = false;
             this.chtChart.ChartAreas[0].AxisY.LabelStyle.Format = "#,##0.00";
             this.chtChart.ChartAreas[0].AxisY.IsStartedFromZero = false;
-
-            //// Set Chart Area position
-            //this.chtChart.ChartAreas[0].Position.Auto = false;
-            //this.chtChart.ChartAreas[0].Position.X = 10;
-            //this.chtChart.ChartAreas[0].Position.Y = 10;
-            //this.chtChart.ChartAreas[0].Position.Width = 10;
-            //this.chtChart.ChartAreas[0].Position.Height = 10;
 
             for (var i = 0; i < groups.Count; i++)
             {
@@ -115,44 +155,6 @@ namespace StockMarket
             #endregion
         }
 
-        public Series CreateCandleSeries(string name, bool showLegend)
-        {
-            var series = new Series(name);
-            series.ChartType = SeriesChartType.Candlestick;
-            series.BorderWidth = 2;
-            series.IsVisibleInLegend = showLegend;
-            //series.XValueType = ChartValueType.Date;
-            //series.YValueType = ChartValueType.Double;
-            //series.MarkerStyle = MarkerStyle.Circle;
-            //series.MarkerSize = 4;
-            //series.MarkerColor = Color.Red;
-            series.ToolTip = "#VALX\n#VALY{F2}";
-
-            // Set the style of the open-close marks
-            series["OpenCloseStyle"] = "Triangle";
-
-            // Show both open and close marks
-            series["ShowOpenClose"] = "Both";
-
-            // Set point width
-            series["PointWidth"] = "0.7";
-
-            // Set colors bars
-            series["PriceUpColor"] = "Green"; // <<== use text indexer for series
-            series["PriceDownColor"] = "Red"; // <<== use text indexer for series
-
-            return series;
-        }
-
-        public Series CreateColumnSeries(string name, bool showLegend)
-        {
-            var series = new Series(name);
-            series.ChartType = SeriesChartType.Column;
-            series.BorderWidth = 2;
-            series.IsVisibleInLegend = showLegend;
-            series.ToolTip = "#VALX\n#VALY{F2}";
-
-            return series;
-        }
+        #endregion
     }
 }

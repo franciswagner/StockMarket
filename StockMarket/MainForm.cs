@@ -180,7 +180,6 @@ namespace StockMarket
             }
 
             this.Day.HeaderText = "Dia " + DateTime.Now.ToString("dd/MM/yyyy");
-            //this.dgvAbstract.DataSource = this._table;
         }
 
         #endregion
@@ -221,12 +220,6 @@ namespace StockMarket
             this.RunMonitoringControls(tabsControls);
         }
 
-        private void tsmClose_Click(object sender, EventArgs e)
-        {
-            this._bypassFormClosing = true;
-            this.Dispose();
-        }
-
         private void btnRestartApplication_Click(object sender, EventArgs e)
         {
             this._bypassFormClosing = true;
@@ -255,7 +248,6 @@ namespace StockMarket
 
             tabPage.Controls.Add(priceMonitorControl);
 
-            //var acoesMonitorList = WebMonitor.LoadFromFile(name);
             var acoesMonitorList = this._webMonitor.AcoesCollections;
 
             priceMonitorControl.UpdateControl(acoesMonitorList);
@@ -331,11 +323,8 @@ namespace StockMarket
                     if (cellColor != Color.Red)
                         cell.Style.ForeColor = Color.Red;
                 }
-                else if (Convert.ToDecimal(valueCell) > Convert.ToDecimal(rowObj.Closing))
-                {
-                    if (cellColor != Color.Green)
-                        cell.Style.ForeColor = Color.Green;
-                }
+                else if (Convert.ToDecimal(valueCell) > Convert.ToDecimal(rowObj.Closing) && cellColor != Color.Green)
+                    cell.Style.ForeColor = Color.Green;
             }
             else if (columnName.StartsWith("Rent"))
             {
@@ -346,11 +335,8 @@ namespace StockMarket
                     if (cellColor != Color.Red)
                         cell.Style.ForeColor = Color.Red;
                 }
-                else if (valueCell != "0,00")
-                {
-                    if (cellColor != Color.Green)
-                        cell.Style.ForeColor = Color.Green;
-                }
+                else if (valueCell != "0,00" && cellColor != Color.Green)
+                    cell.Style.ForeColor = Color.Green;
             }
 
             this.dgvAbstract.CellPainting += dgvAbstract_CellPainting;
