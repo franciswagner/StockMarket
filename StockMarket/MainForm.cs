@@ -7,6 +7,7 @@ using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace StockMarket
@@ -225,7 +226,11 @@ namespace StockMarket
             this.LoadAbstract(acoesMonitorList);
 
             var tabsControls = this.CreateTabsControls();
-            this.RunMonitoringControls(tabsControls);
+
+            Task.Run(() =>
+            {
+                this.RunMonitoringControls(tabsControls);
+            });
         }
 
         private void btnRestartApplication_Click(object sender, EventArgs e)
