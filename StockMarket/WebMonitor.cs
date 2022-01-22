@@ -190,83 +190,80 @@ namespace PriceMonitor
 
         public void Run(Action<List<AcoesCollection>> callback, Action callback_OpenedMarket, Action callback_ClosedMarket, Action<string> callback_Error, Action<int, string> callback_Notification)
         {
-            while (true)
+            // Verifica se o mercado esta aberto
+            if (!IsMarketOpened)
             {
-                // Verifica se o mercado esta aberto
-                if (!IsMarketOpened)
-                {
-                    callback_ClosedMarket();
-                    Thread.Sleep(60000);
-                    continue;
-                }
-
-                if (string.IsNullOrEmpty(this._url))
-                {
-                    callback_Error("Nenhum gateway válido foi identificado.");
-
-                    //Retesta os gateways
-                    this.LoadBestGateway(this._acoes);
-
-                    Thread.Sleep(60000);
-                    continue;
-                }
-
-                var currentGateway = new Uri(this._url).Host;
-                currentGateway = currentGateway.Substring(0, currentGateway.IndexOf("."));
-
-                var json = RequestJson(this._url);
-
-                if (string.IsNullOrWhiteSpace(json))
-                {
-                    callback_Error($"Falha ao comunicar com a internet ({currentGateway}).");
-
-                    this._url = null;
-                    continue;
-                }
-
-                var acoesJsonReader = DeserializeJson(json);
-
-                var errorMessage = string.Empty;
-
-                if (acoesJsonReader.Value.Count == this._acoes.Length)
-                    callback_OpenedMarket();
-                else
-                    errorMessage = $"A URL designada não retornou todos os dados solicitados ({currentGateway}).\r\n    Apenas {acoesJsonReader.Value.Count} de {this._acoes.Length}.";
-
-                var zeroValue = new List<string>();
-                var updateddAcoes = this.ProcessJsonResult(acoesJsonReader, zeroValue);
-
-                if (zeroValue.Any())
-                {
-                    if (!string.IsNullOrWhiteSpace(errorMessage))
-                        errorMessage += Environment.NewLine + Environment.NewLine;
-
-                    errorMessage += $"As Seguintes acões possuem valor zerado ({currentGateway}):{Environment.NewLine}    {string.Join(Environment.NewLine + "    ", zeroValue)}";
-                }
-
-                if (!string.IsNullOrEmpty(errorMessage))
-                    callback_Error(errorMessage);
-
-                callback(this.AcoesCollections);
-
-                var messageNotification = new StringBuilder();
-
-                var acoesNewMinimun = updateddAcoes
-                    .Where(acoes => acoes.Acoes.LastOrDefault().MinimunPrice < this._minValues[acoes.Name] || acoes.Acoes.LastOrDefault().Price <= this._minValues[acoes.Name])
-                    .ToList();
-
-                foreach (var acoes in acoesNewMinimun)
-                {
-                    var last = acoes.Acoes.LastOrDefault();
-                    this._minValues[acoes.Name] = Math.Min(last.MinimunPrice, last.Price); //Esperasse que seja sempre o mesmo valor
-                    messageNotification.AppendLine($"{acoes.Name}: {this._minValues[acoes.Name]:#,##0.00}");
-                }
-
-                if (acoesNewMinimun.Any())
-                    callback_Notification(acoesNewMinimun.Count(), messageNotification.ToString());
-
-                Thread.Sleep(UPDATE_INTERVAL * 1000);
+                callback_ClosedMarket();
+                Thread.Sleep(60000);
+                return;
             }
+
+            if (string.IsNullOrEmpty(this._url))
+            {
+                callback_Error("Nenhum gateway válido foi identificado.");
+
+                //Retesta os gateways
+                this.LoadBestGateway(this._acoes);
+
+                Thread.Sleep(60000);
+                return;
+            }
+
+            var currentGateway = new Uri(this._url).Host;
+            currentGateway = currentGateway.Substring(0, currentGateway.IndexOf("."));
+
+            var json = RequestJson(this._url);
+
+            if (string.IsNullOrWhiteSpace(json))
+            {
+                callback_Error($"Falha ao comunicar com a internet ({currentGateway}).");
+
+                this._url = null;
+                return;
+            }
+
+            var acoesJsonReader = DeserializeJson(json);
+
+            var errorMessage = string.Empty;
+
+            if (acoesJsonReader.Value.Count == this._acoes.Length)
+                callback_OpenedMarket();
+            else
+                errorMessage = $"A URL designada não retornou todos os dados solicitados ({currentGateway}).\r\n    Apenas {acoesJsonReader.Value.Count} de {this._acoes.Length}.";
+
+            var zeroValue = new List<string>();
+            var updateddAcoes = this.ProcessJsonResult(acoesJsonReader, zeroValue);
+
+            if (zeroValue.Any())
+            {
+                if (!string.IsNullOrWhiteSpace(errorMessage))
+                    errorMessage += Environment.NewLine + Environment.NewLine;
+
+                errorMessage += $"As Seguintes acões possuem valor zerado ({currentGateway}):{Environment.NewLine}    {string.Join(Environment.NewLine + "    ", zeroValue)}";
+            }
+
+            if (!string.IsNullOrEmpty(errorMessage))
+                callback_Error(errorMessage);
+
+            callback(this.AcoesCollections);
+
+            var messageNotification = new StringBuilder();
+
+            var acoesNewMinimun = updateddAcoes
+                .Where(acoes => acoes.Acoes.LastOrDefault().MinimunPrice < this._minValues[acoes.Name] || acoes.Acoes.LastOrDefault().Price <= this._minValues[acoes.Name])
+                .ToList();
+
+            foreach (var acoes in acoesNewMinimun)
+            {
+                var last = acoes.Acoes.LastOrDefault();
+                this._minValues[acoes.Name] = Math.Min(last.MinimunPrice, last.Price); //Esperasse que seja sempre o mesmo valor
+                messageNotification.AppendLine($"{acoes.Name}: {this._minValues[acoes.Name]:#,##0.00}");
+            }
+
+            if (acoesNewMinimun.Any())
+                callback_Notification(acoesNewMinimun.Count, messageNotification.ToString());
+
+            Thread.Sleep(UPDATE_INTERVAL * 1000);
         }
 
         #endregion
