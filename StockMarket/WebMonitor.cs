@@ -109,7 +109,6 @@ namespace PriceMonitor
                 var acoes = new AcoesCollection();
 
                 using (var sr = new StreamReader(file))
-                {
                     while (true)
                     {
                         var line = (sr.ReadLine() ?? "").Trim();
@@ -117,12 +116,7 @@ namespace PriceMonitor
                         if (string.IsNullOrEmpty(line))
                             break;
 
-                        if (!line.Contains(";"))
-                            continue;
-
-                        var columns = line.Count(x => x == ';');
-                        if (columns < 9)
-                            line = string.Concat(line, new string(';', 9 - columns));
+                        line = NormalizeLine(line);
 
                         var splitedLine = line.Split(';');
 
@@ -142,7 +136,6 @@ namespace PriceMonitor
                             ClosedPrice = Convert.ToDecimal(string.IsNullOrEmpty(splitedLine[9]) ? "0" : splitedLine[9])
                         });
                     }
-                }
 
                 if (acoes.Acoes.Any())
                 {
@@ -207,7 +200,6 @@ namespace PriceMonitor
                 var acoes = new AcoesCollection();
 
                 using (var sr = new StreamReader(file))
-                {
                     while (true)
                     {
                         var line = sr.ReadLine();
@@ -215,9 +207,7 @@ namespace PriceMonitor
                         if (string.IsNullOrEmpty(line))
                             break;
 
-                        var columns = line.Count(x => x == ';');
-                        if (columns < 9)
-                            line = string.Concat(line, new string(';', 9 - columns));
+                        line = NormalizeLine(line);
 
                         var splitedLine = line.Split(';');
 
@@ -237,7 +227,6 @@ namespace PriceMonitor
                             ClosedPrice = Convert.ToDecimal(string.IsNullOrEmpty(splitedLine[9]) ? "0" : splitedLine[9])
                         });
                     }
-                }
 
                 if (acoes.Acoes.Any())
                 {
@@ -394,6 +383,15 @@ namespace PriceMonitor
                 MessageBox.Show(ex.ToString(), "WTF Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 throw;
             }
+        }
+
+        private static string NormalizeLine(string line)
+        {
+            var columns = line.Count(x => x == ';');
+            if (columns < 9)
+                line = string.Concat(line, new string(';', 9 - columns));
+
+            return line;
         }
 
         private static string RequestJson(string url)

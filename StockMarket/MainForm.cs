@@ -19,7 +19,7 @@ namespace StockMarket
         {
             this.InitializeComponent();
 
-            this.CreateRootFolder();
+            CreateRootFolder();
 
             if (!string.IsNullOrWhiteSpace(Configs.Acoes))
                 this._acoes = Configs.Acoes.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
@@ -43,12 +43,6 @@ namespace StockMarket
         #endregion
 
         #region Private Methods
-
-        private void CreateRootFolder()
-        {
-            if (!Directory.Exists("DataFiles"))
-                Directory.CreateDirectory("DataFiles");
-        }
 
         private List<TabPage> CreateTabsControls()
         {
@@ -182,6 +176,16 @@ namespace StockMarket
             }
 
             this.Day.HeaderText = "Dia " + DateTime.Now.ToString("dd/MM/yyyy");
+        }
+
+        #endregion
+
+        #region Static Methods
+
+        private static void CreateRootFolder()
+        {
+            if (!Directory.Exists("DataFiles"))
+                Directory.CreateDirectory("DataFiles");
         }
 
         #endregion
