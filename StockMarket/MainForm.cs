@@ -190,6 +190,8 @@ namespace StockMarket
 
         #endregion
 
+        #region Signed Event Methods
+
         private void Form1_FormClosing(object sender, FormClosingEventArgs e)
         {
             if (!this._bypassFormClosing)
@@ -347,5 +349,7 @@ namespace StockMarket
             var form = new ConfigForm();
             form.ShowDialog();
         }
+
+        #endregion
     }
 }

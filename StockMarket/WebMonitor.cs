@@ -60,7 +60,7 @@ namespace PriceMonitor
             {
                 if (this._acoesCollection == null)
                 {
-                    this._acoesCollection = this.LoadFromFile();
+                    this._acoesCollection = this.LoadFromFiles();
 
                     if (!this._acoesCollection.Any())
                     {
@@ -97,7 +97,7 @@ namespace PriceMonitor
 
         #region Private Methods
 
-        private List<AcoesCollection> LoadFromFile()
+        private List<AcoesCollection> LoadFromFiles()
         {
             var acoesMonitorList = new List<AcoesCollection>();
 
@@ -106,47 +106,9 @@ namespace PriceMonitor
                 if (!this._acoes.Any(x => x == Path.GetFileNameWithoutExtension(file)))
                     continue;
 
-                var acoes = new AcoesCollection();
-
-                using (var sr = new StreamReader(file))
-                    while (true)
-                    {
-                        var line = (sr.ReadLine() ?? "").Trim();
-
-                        if (string.IsNullOrEmpty(line))
-                            break;
-
-                        line = NormalizeLine(line);
-
-                        var splitedLine = line.Split(';');
-
-                        if (!acoes.Acoes.Any())
-                            acoes.Name = splitedLine[0];
-
-                        acoes.Acoes.Add(new Acao()
-                        {
-                            RequestedDate = Convert.ToDateTime(splitedLine[1]),
-                            Date = Convert.ToDateTime(splitedLine[2]),
-                            OppeningPrice = Convert.ToDecimal(splitedLine[3]),
-                            Price = Convert.ToDecimal(splitedLine[4]),
-                            MinimunPrice = Convert.ToDecimal(string.IsNullOrEmpty(splitedLine[5]) ? "0" : splitedLine[5]),
-                            MaximunPrice = Convert.ToDecimal(string.IsNullOrEmpty(splitedLine[6]) ? "0" : splitedLine[6]),
-                            AveragePrice = Convert.ToDecimal(string.IsNullOrEmpty(splitedLine[7]) ? "0" : splitedLine[7]),
-                            Volume = Convert.ToDecimal(string.IsNullOrEmpty(splitedLine[8]) ? "0" : splitedLine[8]),
-                            ClosedPrice = Convert.ToDecimal(string.IsNullOrEmpty(splitedLine[9]) ? "0" : splitedLine[9])
-                        });
-                    }
-
-                if (acoes.Acoes.Any())
-                {
-                    //30 min X max points
-                    var max = MAX_CANDLES_IN_GRAPH * Configs.CandlePeriod;
-
-                    if (acoes.Acoes.Count > max)
-                        acoes.Acoes = acoes.Acoes.TakeLast(max).ToList();
-
+                var acoes = LoadFromFile(file);
+                if (acoes != null)
                     acoesMonitorList.Add(acoes);
-                }
             }
 
             return acoesMonitorList;
@@ -184,64 +146,42 @@ namespace PriceMonitor
                 }
             }
         }
-        #endregion
 
-        #region Public Methods
-
-        public static List<AcoesCollection> LoadFromFile(string fileName)
+        private DateTime? ProcessJsonResult(AcoesJsonReaderPriceCollection acoesJsonReader, List<string> zeroValue)
         {
-            var acoesMonitorList = new List<AcoesCollection>();
+            DateTime? lastDate = null;
 
-            foreach (var file in Directory.EnumerateFiles("DataFiles"))
+            if (acoesJsonReader != null)
             {
-                if (Path.GetFileNameWithoutExtension(file) != fileName)
-                    continue;
+                foreach (var jsonAcao in acoesJsonReader.Value)
+                {
+                    var name = jsonAcao.S;
+                    var acao = new Acao(jsonAcao);
 
-                var acoes = new AcoesCollection();
+                    lastDate = acao.RequestedDate;
 
-                using (var sr = new StreamReader(file))
-                    while (true)
+                    if (acao.OppeningPrice <= 0 || acao.Price <= 0)
                     {
-                        var line = sr.ReadLine();
-
-                        if (string.IsNullOrEmpty(line))
-                            break;
-
-                        line = NormalizeLine(line);
-
-                        var splitedLine = line.Split(';');
-
-                        if (!acoes.Acoes.Any())
-                            acoes.Name = splitedLine[0];
-
-                        acoes.Acoes.Add(new Acao()
-                        {
-                            RequestedDate = Convert.ToDateTime(splitedLine[1]),
-                            Date = Convert.ToDateTime(splitedLine[2]),
-                            OppeningPrice = Convert.ToDecimal(splitedLine[3]),
-                            Price = Convert.ToDecimal(splitedLine[4]),
-                            MinimunPrice = Convert.ToDecimal(string.IsNullOrEmpty(splitedLine[5]) ? "0" : splitedLine[5]),
-                            MaximunPrice = Convert.ToDecimal(string.IsNullOrEmpty(splitedLine[6]) ? "0" : splitedLine[6]),
-                            AveragePrice = Convert.ToDecimal(string.IsNullOrEmpty(splitedLine[7]) ? "0" : splitedLine[7]),
-                            Volume = Convert.ToDecimal(string.IsNullOrEmpty(splitedLine[8]) ? "0" : splitedLine[8]),
-                            ClosedPrice = Convert.ToDecimal(string.IsNullOrEmpty(splitedLine[9]) ? "0" : splitedLine[9])
-                        });
+                        zeroValue.Add(name);
+                        continue;
                     }
 
-                if (acoes.Acoes.Any())
-                {
-                    //30 min X max points
-                    var max = MAX_CANDLES_IN_GRAPH * Configs.CandlePeriod;
+                    SaveToFile(name, acao);
 
-                    if (acoes.Acoes.Count > max)
-                        acoes.Acoes = acoes.Acoes.TakeLast(max).ToList();
-
-                    acoesMonitorList.Add(acoes);
+                    var acoesMonitor = this.AcoesCollections.FirstOrDefault(x => x.Name == name);
+                    if (acoesMonitor != null)
+                        acoesMonitor.Acoes.Add(acao);
+                    else
+                        this.AcoesCollections.Add(new AcoesCollection(name, acao));
                 }
             }
 
-            return acoesMonitorList;
+            return lastDate;
         }
+
+        #endregion
+
+        #region Public Methods
 
         public void Run(Action<List<AcoesCollection>> callback, Action callback_OpenedMarket, Action callback_ClosedMarket, Action<string> callback_Error, Action<int, string> callback_Nitification)
         {
@@ -293,33 +233,8 @@ namespace PriceMonitor
                     else
                         errorMessage = $"A URL designada não retornou todos os dados solicitados ({currentGateway}).\r\n    Apenas {acoesJsonReader.Value.Count} de {this._acoes.Length}.";
 
-                    DateTime? lastDate = null;
-
                     var zeroValue = new List<string>();
-                    if (acoesJsonReader != null)
-                    {
-                        foreach (var jsonAcao in acoesJsonReader.Value)
-                        {
-                            var name = jsonAcao.S;
-                            var acao = new Acao(jsonAcao);
-
-                            lastDate = acao.RequestedDate;
-
-                            if (acao.OppeningPrice <= 0 || acao.Price <= 0)
-                            {
-                                zeroValue.Add(name);
-                                continue;
-                            }
-
-                            SaveToFile(name, acao);
-
-                            var acoesMonitor = this.AcoesCollections.FirstOrDefault(x => x.Name == name);
-                            if (acoesMonitor != null)
-                                acoesMonitor.Acoes.Add(acao);
-                            else
-                                this.AcoesCollections.Add(new AcoesCollection(name, acao));
-                        }
-                    }
+                    var lastDate = this.ProcessJsonResult(acoesJsonReader, zeroValue);
 
                     if (zeroValue.Any())
                     {
@@ -385,6 +300,51 @@ namespace PriceMonitor
             }
         }
 
+        private static AcoesCollection LoadFromFile(string file)
+        {
+            var acoes = new AcoesCollection();
+
+            using (var sr = new StreamReader(file))
+                while (true)
+                {
+                    var line = (sr.ReadLine() ?? "").Trim();
+
+                    if (string.IsNullOrEmpty(line))
+                        break;
+
+                    line = NormalizeLine(line);
+
+                    var splitedLine = line.Split(';');
+
+                    if (!acoes.Acoes.Any())
+                        acoes.Name = splitedLine[0];
+
+                    acoes.Acoes.Add(new Acao()
+                    {
+                        RequestedDate = Convert.ToDateTime(splitedLine[1]),
+                        Date = Convert.ToDateTime(splitedLine[2]),
+                        OppeningPrice = Convert.ToDecimal(splitedLine[3]),
+                        Price = Convert.ToDecimal(splitedLine[4]),
+                        MinimunPrice = Convert.ToDecimal(string.IsNullOrEmpty(splitedLine[5]) ? "0" : splitedLine[5]),
+                        MaximunPrice = Convert.ToDecimal(string.IsNullOrEmpty(splitedLine[6]) ? "0" : splitedLine[6]),
+                        AveragePrice = Convert.ToDecimal(string.IsNullOrEmpty(splitedLine[7]) ? "0" : splitedLine[7]),
+                        Volume = Convert.ToDecimal(string.IsNullOrEmpty(splitedLine[8]) ? "0" : splitedLine[8]),
+                        ClosedPrice = Convert.ToDecimal(string.IsNullOrEmpty(splitedLine[9]) ? "0" : splitedLine[9])
+                    });
+                }
+
+            if (!acoes.Acoes.Any())
+                return null;
+
+            //30 min X max points
+            var max = MAX_CANDLES_IN_GRAPH * Configs.CandlePeriod;
+
+            if (acoes.Acoes.Count > max)
+                acoes.Acoes = acoes.Acoes.TakeLast(max).ToList();
+
+            return acoes;
+        }
+
         private static string NormalizeLine(string line)
         {
             var columns = line.Count(x => x == ';');
@@ -424,7 +384,9 @@ namespace PriceMonitor
 
                     using (var sr = new StreamReader(response.GetResponseStream(), encoding))
                     {
-                        sr.BaseStream.ReadTimeout = 5000;
+                        if(sr.BaseStream.CanTimeout)
+                            sr.BaseStream.ReadTimeout = 5000;
+
                         htmlSource = sr.ReadToEnd();
 
                         return htmlSource;
