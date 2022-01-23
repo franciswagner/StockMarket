@@ -20,7 +20,7 @@ namespace StockMarket.Services
 
         #region Private Fields
 
-        private ISerializationService _serializationService;
+        private readonly ISerializationService _serializationService;
 
         private readonly string[] _gateways = { "mdgateway", "mdgateway01", "mdgateway02", "mdgateway03", "mdgateway04", "mdgateway06" };
 

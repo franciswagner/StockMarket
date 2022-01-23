@@ -4,6 +4,7 @@
     <TargetFramework>net5.0-windows</TargetFramework>
     <UseWindowsForms>true</UseWindowsForms>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <ProduceReferenceAssemblies>false</ProduceReferenceAssemblies>
 
     <RootNamespace>StockMarket</RootNamespace>
     <AssemblyName>StockMarket</AssemblyName>

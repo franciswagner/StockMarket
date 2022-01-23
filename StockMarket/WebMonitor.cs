@@ -36,9 +36,9 @@ namespace PriceMonitor
         private readonly string[] _acoes;
         private readonly Dictionary<string, decimal> _minValues = new Dictionary<string, decimal>();
 
-        private IConfigsService _configsService;
-        private IGatewayService _gatewayService;
-        private ISerializationService _serializationService;
+        private readonly IConfigsService _configsService;
+        private readonly IGatewayService _gatewayService;
+        private readonly ISerializationService _serializationService;
 
         #endregion
 
