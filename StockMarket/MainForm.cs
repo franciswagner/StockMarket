@@ -1,5 +1,6 @@
 ﻿using PriceMonitor;
 using StockMarket.Properties;
+using StockMarket.Services;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -10,26 +11,37 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace StockMarket
 {
     public partial class MainForm : Form
     {
+        #region Consts
+
+        public const int UPDATE_INTERVAL = 60; // seconds
+
+        #endregion
+
         #region Constructors
 
         public MainForm()
         {
             this.InitializeComponent();
 
+            this._configsService = Program.ServiceProvider.GetService<IConfigsService>();
+
             CreateRootFolder();
 
-            if (!string.IsNullOrWhiteSpace(Configs.Acoes))
-                this._acoes = Configs.Acoes.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
+            if (!string.IsNullOrWhiteSpace(this._configsService.Acoes))
+                this._acoes = this._configsService.Acoes.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
         }
 
         #endregion
 
         #region Private Fields
+
+        IConfigsService _configsService;
 
         private bool _bypassFormClosing = false;
 
@@ -102,6 +114,8 @@ namespace StockMarket
                     {
                         this.Invoke(new Action(() => NotifyNewMinimunValue(count, message)));
                     });
+
+                    Thread.Sleep(UPDATE_INTERVAL * 1000);
                 }
             }, cancellationToken.Token);
         }
@@ -132,7 +146,7 @@ namespace StockMarket
             }
 
             this.tstStatusIcon.Image = Resources.alert_orange;
-            this.tstStatusIcon.ToolTipText = $"Mercado fechado ({WebMonitor.MARKET_OPENING:HH:mm}-{WebMonitor.MARKET_CLOSING:HH:mm})";
+            this.tstStatusIcon.ToolTipText = $"Mercado fechado ({this._configsService.MarketOpening:HH:mm}-{this._configsService.MarketClosing:HH:mm})";
         }
 
         private void NotifyCommunicationError(string message)
@@ -238,7 +252,10 @@ namespace StockMarket
 
         private void MainForm_Load(object sender, EventArgs e)
         {
-            this._webMonitor = new WebMonitor(this._acoes);
+            var serializationService = Program.ServiceProvider.GetService<ISerializationService>();
+            var gatewayService = Program.ServiceProvider.GetService<IGatewayService>();
+
+            this._webMonitor = new WebMonitor(this._acoes, gatewayService, serializationService, this._configsService);
 
             var acoesMonitorList = this._webMonitor.AcoesCollections;
             this.LoadAbstract(acoesMonitorList);
@@ -266,7 +283,7 @@ namespace StockMarket
             if (name == "Resumo")
                 return;
 
-            var priceMonitorControl = new PriceMonitorControl(name)
+            var priceMonitorControl = new PriceMonitorControl(name, this._configsService)
             {
                 Dock = DockStyle.Fill,
                 Location = new Point(3, 3),
@@ -366,7 +383,7 @@ namespace StockMarket
 
         private void tsmConfig_Click(object sender, EventArgs e)
         {
-            var form = new ConfigForm();
+            var form = new ConfigForm(this._configsService);
             form.ShowDialog();
         }
 

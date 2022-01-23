@@ -1,4 +1,5 @@
-﻿using System;
+﻿using StockMarket.Services;
+using System;
 using System.Drawing;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -10,15 +11,17 @@ namespace StockMarket
     {
         #region Constructors
 
-        public ConfigForm()
+        public ConfigForm(IConfigsService configsService)
         {
+            this._configsService = configsService;
+
             this.InitializeComponent();
 
-            this.txtAcoes.Text = Configs.Acoes;
-            this.txtOpening.Text = Configs.Opening.ToString("hh\\:mm\\:ss");
-            this.txtClosing.Text = Configs.Closing.ToString("hh\\:mm\\:ss");
+            this.txtAcoes.Text = this._configsService.Acoes;
+            this.txtOpening.Text = this._configsService.Opening.ToString("hh\\:mm\\:ss");
+            this.txtClosing.Text = this._configsService.Closing.ToString("hh\\:mm\\:ss");
 
-            switch (Configs.CandlePeriod)
+            switch (this._configsService.CandlePeriod)
             {
                 case 5:
                     this.rtb5Min.Checked = true;
@@ -37,6 +40,12 @@ namespace StockMarket
                     break;
             }
         }
+
+        #endregion
+
+        #region Private Fields
+
+        private IConfigsService _configsService;
 
         #endregion
 
@@ -66,20 +75,20 @@ namespace StockMarket
             }
 
             if (this.rtb5Min.Checked)
-                Configs.CandlePeriod = 5;
+                this._configsService.CandlePeriod = 5;
             else if (this.rtb15Min.Checked)
-                Configs.CandlePeriod = 15;
+                this._configsService.CandlePeriod = 15;
             else if (this.rtb30Min.Checked)
-                Configs.CandlePeriod = 30;
+                this._configsService.CandlePeriod = 30;
             else if (this.rtb60Min.Checked)
-                Configs.CandlePeriod = 60;
+                this._configsService.CandlePeriod = 60;
             else if (this.rtb360Min.Checked)
-                Configs.CandlePeriod = 360;
+                this._configsService.CandlePeriod = 360;
 
-            Configs.Acoes = this.txtAcoes.Text;
-            Configs.Opening = TimeSpan.Parse(this.txtOpening.Text);
-            Configs.Closing = TimeSpan.Parse(this.txtClosing.Text);
-            Configs.Save();
+            this._configsService.Acoes = this.txtAcoes.Text;
+            this._configsService.Opening = TimeSpan.Parse(this.txtOpening.Text);
+            this._configsService.Closing = TimeSpan.Parse(this.txtClosing.Text);
+            this._configsService.Save();
 
             MessageBox.Show("Configurações salvas com sucesso", this.Text, MessageBoxButtons.OK, MessageBoxIcon.Information);
             return true;

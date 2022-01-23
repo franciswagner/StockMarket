@@ -1,15 +1,10 @@
-﻿using Newtonsoft.Json;
-using StockMarket;
+﻿using StockMarket;
+using StockMarket.Services;
 using System;
 using System.Collections.Generic;
-using System.Configuration;
 using System.IO;
 using System.Linq;
-using System.Net;
 using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Windows.Forms;
 
 namespace PriceMonitor
 {
@@ -18,36 +13,32 @@ namespace PriceMonitor
         #region Consts
 
         public const int MAX_CANDLES_IN_GRAPH = 100;
-        public const int UPDATE_INTERVAL = 60; // seconds
-
-        public static DateTime MARKET_OPENING
-        {
-            get { return DateTime.Today + Configs.Opening; }
-        }
-
-        public static DateTime MARKET_CLOSING
-        {
-            get { return DateTime.Today + Configs.Closing; }
-        }
 
         #endregion
 
         #region Constructors
 
-        public WebMonitor(string[] acoes)
+        public WebMonitor(string[] acoes, IGatewayService gatewayService, ISerializationService serializationService, IConfigsService configsService)
         {
             this._acoes = acoes;
-            this.LoadBestGateway(acoes);
+
+            this._configsService = configsService;
+            this._gatewayService = gatewayService;
+            this._serializationService = serializationService;
+
+            this._gatewayService.LoadBestGateway(acoes);
         }
 
         #endregion
 
         #region Private Fields
 
-        private string _url;
         private readonly string[] _acoes;
-        private readonly string[] _gateways = { "mdgateway", "mdgateway01", "mdgateway02", "mdgateway03", "mdgateway04", "mdgateway06" };
         private readonly Dictionary<string, decimal> _minValues = new Dictionary<string, decimal>();
+
+        private IConfigsService _configsService;
+        private IGatewayService _gatewayService;
+        private ISerializationService _serializationService;
 
         #endregion
 
@@ -81,18 +72,6 @@ namespace PriceMonitor
             }
         }
 
-        public static bool IsMarketOpened
-        {
-            get
-            {
-                var now = DateTime.Now;
-                if (now < WebMonitor.MARKET_OPENING || now >= WebMonitor.MARKET_CLOSING)
-                    return false;
-
-                return true;
-            }
-        }
-
         #endregion
 
         #region Private Methods
@@ -112,39 +91,6 @@ namespace PriceMonitor
             }
 
             return acoesMonitorList;
-        }
-
-
-        private void LoadBestGateway(string[] acoes)
-        {
-            var urlGatewayemplate = ConfigurationManager.AppSettings["UrlGatewayTemplate"];
-
-            var bestCount = 0;
-            foreach (var gateway in this._gateways)
-            {
-                var url = string.Format(urlGatewayemplate, gateway);
-
-                var sbUrl = new StringBuilder();
-                sbUrl.Append(url);
-
-                foreach (var acao in acoes)
-                {
-                    sbUrl.Append(acao);
-                    sbUrl.Append(",1,0|");
-                }
-
-                url = sbUrl.ToString().Trim('|');
-
-                int count;
-                if (TestGateway(url, out count) && count > bestCount)
-                {
-                    bestCount = count;
-                    this._url = url;
-
-                    if (bestCount == this._acoes.Length)
-                        break;
-                }
-            }
         }
 
         private List<AcoesCollection> ProcessJsonResult(AcoesJsonReaderPriceCollection acoesJsonReader, List<string> zeroValue)
@@ -179,7 +125,7 @@ namespace PriceMonitor
 
             // Invalidate the url
             if (validAcoesCollections.Count != this.AcoesCollections.Count)
-                this._url = null;
+                this._gatewayService.InvalidateGateway();
 
             return validAcoesCollections;
         }
@@ -191,38 +137,36 @@ namespace PriceMonitor
         public void Run(Action<List<AcoesCollection>> callback, Action callback_OpenedMarket, Action callback_ClosedMarket, Action<string> callback_Error, Action<int, string> callback_Notification)
         {
             // Verifica se o mercado esta aberto
-            if (!IsMarketOpened)
+            if (!this._configsService.IsMarketOpened)
             {
                 callback_ClosedMarket();
-                Thread.Sleep(60000);
                 return;
             }
 
-            if (string.IsNullOrEmpty(this._url))
+            if (string.IsNullOrEmpty(this._gatewayService.Url))
             {
                 callback_Error("Nenhum gateway válido foi identificado.");
 
                 //Retesta os gateways
-                this.LoadBestGateway(this._acoes);
+                this._gatewayService.LoadBestGateway(this._acoes);
 
-                Thread.Sleep(60000);
                 return;
             }
 
-            var currentGateway = new Uri(this._url).Host;
+            var currentGateway = new Uri(this._gatewayService.Url).Host;
             currentGateway = currentGateway.Substring(0, currentGateway.IndexOf("."));
 
-            var json = RequestJson(this._url);
+            var json = this._gatewayService.RequestJson(this._gatewayService.Url);
 
             if (string.IsNullOrWhiteSpace(json))
             {
                 callback_Error($"Falha ao comunicar com a internet ({currentGateway}).");
 
-                this._url = null;
+                this._gatewayService.InvalidateGateway();
                 return;
             }
 
-            var acoesJsonReader = DeserializeJson(json);
+            var acoesJsonReader = this._serializationService.DeserializeJson(json);
 
             var errorMessage = string.Empty;
 
@@ -264,29 +208,13 @@ namespace PriceMonitor
 
             if (acoesNewMinimun.Any())
                 callback_Notification(acoesNewMinimun.Count, messageNotification.ToString());
-
-            Thread.Sleep(UPDATE_INTERVAL * 1000);
         }
 
         #endregion
 
         #region Static Methods
 
-        private static AcoesJsonReaderPriceCollection DeserializeJson(string json)
-        {
-            try
-            {
-                var teste = JsonConvert.DeserializeObject<AcoesJsonReaderPriceCollection>(json);
-                return teste;
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(ex.ToString(), "WTF Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                throw;
-            }
-        }
-
-        private static AcoesCollection LoadFromFile(string file)
+        private AcoesCollection LoadFromFile(string file)
         {
             var acoes = new AcoesCollection();
 
@@ -323,7 +251,7 @@ namespace PriceMonitor
                 return null;
 
             //30 min X max points
-            var max = MAX_CANDLES_IN_GRAPH * Configs.CandlePeriod;
+            var max = MAX_CANDLES_IN_GRAPH * this._configsService.CandlePeriod;
 
             if (acoes.Acoes.Count > max)
                 acoes.Acoes = acoes.Acoes.TakeLast(max).ToList();
@@ -338,55 +266,6 @@ namespace PriceMonitor
                 line = string.Concat(line, new string(';', 9 - columns));
 
             return line;
-        }
-
-        private static string RequestJson(string url)
-        {
-            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12 | SecurityProtocolType.Tls13;
-
-            var uri = new Uri(url);
-
-            var request = (HttpWebRequest)WebRequest.Create(uri);
-            request.Method = "GET";
-            request.Accept = "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8";
-            request.UserAgent = "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:36.0) Gecko/20100101 Firefox/36.0";
-            request.Headers.Add("Accept-Language", "pt-BR,pt;q=0.8,en-US;q=0.5,en;q=0.3");
-            request.Headers.Add("Upgrade-Insecure-Requests", "1");
-            request.Headers.Add("Pragma", "no-cache");
-            request.Headers.Add("Cache-Control", "no-cache");
-
-            try
-            {
-                var htmlSource = string.Empty;
-                var response = (HttpWebResponse)request.GetResponse();
-
-                try
-                {
-                    Encoding encoding;
-                    if (response.ContentType.ToLower().Contains("utf-8"))
-                        encoding = Encoding.UTF8;
-                    else
-                        encoding = Encoding.GetEncoding("ISO-8859-1");
-
-                    using (var sr = new StreamReader(response.GetResponseStream(), encoding))
-                    {
-                        if (sr.BaseStream.CanTimeout)
-                            sr.BaseStream.ReadTimeout = 5000;
-
-                        htmlSource = sr.ReadToEnd();
-
-                        return htmlSource;
-                    }
-                }
-                catch (Exception)
-                {
-                    return string.Empty;
-                }
-            }
-            catch
-            {
-                return string.Empty;
-            }
         }
 
         private static void SaveToFile(string name, Acao acao)
@@ -407,29 +286,6 @@ namespace PriceMonitor
                     acao.AveragePrice + spliter +
                     acao.Volume + spliter +
                     acao.ClosedPrice);
-        }
-
-        private static bool TestGateway(string url, out int count)
-        {
-            var json = RequestJson(url);
-
-            if (string.IsNullOrWhiteSpace(json))
-            {
-                count = 0;
-                return false;
-            }
-
-            var acoesJsonReader = DeserializeJson(json);
-
-            var validCount = acoesJsonReader.Value.Count(x => x.Ps.P != 0 && x.Ps.OP != 0 && x.Ps.CP != 0);
-            if (validCount != 0)
-            {
-                count = validCount;
-                return true;
-            }
-
-            count = 0;
-            return false;
         }
 
 

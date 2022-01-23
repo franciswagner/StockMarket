@@ -1,21 +1,40 @@
-﻿using System;
+﻿using Microsoft.Extensions.DependencyInjection;
+using StockMarket.Services;
+using System;
+using System.Net;
 using System.Windows.Forms;
 
 namespace StockMarket
 {
-    static class Program
+    public static class Program
     {
         /// <summary>
         /// The main entry point for the application.
         /// </summary>
         [STAThread]
-        static void Main()
+        public static void Main()
         {
-            Configs.Load();
+            ConfigureServices();
+
+            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12 | SecurityProtocolType.Tls13;
+
+            var configs = ServiceProvider.GetService<IConfigsService>();
+            configs.Load();
 
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
             Application.Run(new MainForm());
+        }
+
+        public static IServiceProvider ServiceProvider { get; set; }
+
+        private static void ConfigureServices()
+        {
+            var services = new ServiceCollection();
+            services.AddSingleton<IConfigsService, ConfigsService>();
+            services.AddTransient<IGatewayService, GatewayService>();
+            services.AddTransient<ISerializationService, SerializationService>();
+            ServiceProvider = services.BuildServiceProvider();
         }
     }
 }

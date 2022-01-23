@@ -1,4 +1,5 @@
 ﻿using PriceMonitor;
+using StockMarket.Services;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
@@ -11,14 +12,17 @@ namespace StockMarket
     {
         #region Constructors
 
-        public PriceMonitorControl()
+        public PriceMonitorControl(IConfigsService configsService)
         {
+            this._configsService = configsService;
+
             this.InitializeComponent();
         }
 
-        public PriceMonitorControl(string acao)
+        public PriceMonitorControl(string acao, IConfigsService configsService)
         {
             this.Acao = acao;
+            this._configsService = configsService;
 
             this.InitializeComponent();
         }
@@ -28,6 +32,12 @@ namespace StockMarket
         #region Attributes and Properties
 
         public string Acao { get; }
+
+        #endregion
+
+        #region Private Fields
+
+        private IConfigsService _configsService;
 
         #endregion
 
@@ -91,7 +101,7 @@ namespace StockMarket
             var groups = listaAcoes.GroupBy(x =>
             {
                 var stamp = x.RequestedDate;
-                stamp = stamp.AddMinutes(-(stamp.Minute % Configs.CandlePeriod));
+                stamp = stamp.AddMinutes(-(stamp.Minute % this._configsService.CandlePeriod));
                 stamp = stamp.AddMilliseconds(-stamp.Millisecond - 1000 * stamp.Second);
                 return stamp.ToString();
             })
