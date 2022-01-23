@@ -51,4 +51,4 @@ jobs:
       - uses: actions/setup-dotnet@v1
         with:
           dotnet-version: "5.0.x"
-      - run: Get-ChildItem -Recurse *bin\Debug\net5.0-windows\Tests.UnitTests.dll | % { dotnet test $_ }
+      - run: Get-ChildItem -Recurse *bin\Release\net5.0-windows\Tests.UnitTests.dll | % { dotnet test $_ }
