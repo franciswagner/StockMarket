@@ -47,7 +47,7 @@ jobs:
         uses: actions/cache@v2
         with:
           key: Cache ${{github.run_number}} | Unit Tests
-          path: Tests.UnitTests/bin/Release/net5.0-windows/publish/*
+          path: Tests.UnitTests/bin/Release/net5.0-windows/*
       - uses: actions/setup-dotnet@v1
         with:
           dotnet-version: "5.0.x"
