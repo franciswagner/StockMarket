@@ -16,12 +16,14 @@ jobs:
       - uses: actions/checkout@v2
         with:
           fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
+
       - name: Cache SonarQube packages
         uses: actions/cache@v1
         with:
           path: ~\sonar\cache
           key: ${{ runner.os }}-sonar
           restore-keys: ${{ runner.os }}-sonar
+
       - name: Cache SonarQube scanner
         id: cache-sonar-scanner
         uses: actions/cache@v1
@@ -29,26 +31,28 @@ jobs:
           path: .\.sonar\scanner
           key: ${{ runner.os }}-sonar-scanner
           restore-keys: ${{ runner.os }}-sonar-scanner
+
       - name: Install SonarQube scanner
         if: steps.cache-sonar-scanner.outputs.cache-hit != 'true'
         shell: powershell
         run: |
           New-Item -Path .\.sonar\scanner -ItemType Directory
           dotnet tool update dotnet-sonarscanner --tool-path .\.sonar\scanner
-      - name: Build and analyze
+
+      - name: Build
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
         shell: powershell
         run: |
-          .\.sonar\scanner\dotnet-sonarscanner begin /k:"ecmnienow_StockMarket" /d:sonar.login="${{ secrets.SONAR_TOKEN }}" /d:sonar.host.url="${{ secrets.SONAR_HOST_URL }}"
+          .\.sonar\scanner\dotnet-sonarscanner begin /k:"ecmnienow_StockMarket" /d:sonar.login="${{ secrets.SONAR_TOKEN }}" /d:sonar.host.url="${{ secrets.SONAR_HOST_URL }}" /d:sonar.coverageReportPaths=".\sonarqubecoverage\SonarQube.xml"
           dotnet build
+
+      - name: Analyze
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
+        shell: powershell
+        run: |
+          dotnet test Tests.UnitTests\Tests.UnitTests.csproj /p:CollectCoverage=true /p:IncludeTestAssembly=true /p:CoverletOutputFormat=cobertura /p:ExcludeByFile=\"**/Microsoft.NET.Test.Sdk.Program.cs\" /p:CoverletOutput=\TestResults\coverage.cobertura.xml --collect:"XPlat Code Coverage"
+          dotnet tool install --global dotnet-reportgenerator-globaltool --version 5.0.2
+          reportgenerator "-reports:D:\a\StockMarket\StockMarket\Tests.UnitTests\TestResults\*\coverage.cobertura.xml" "-targetdir:sonarqubecoverage" "-reporttypes:SonarQube"
           .\.sonar\scanner\dotnet-sonarscanner end /d:sonar.login="${{ secrets.SONAR_TOKEN }}"
-      - name: "Get Cache: Unit tests"
-        uses: actions/cache@v2
-        with:
-          key: Cache ${{github.run_number}} | Unit Tests
-          path: Tests.UnitTests/bin/Release/net5.0-windows/*
-      - uses: actions/setup-dotnet@v1
-        with:
-          dotnet-version: "5.0.x"
-      - run: Get-ChildItem -Recurse *.UnitTests.dll | % { dotnet test $_ }

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.ComponentModel;
 using System.Linq;
 using System.Security.Cryptography;
@@ -154,7 +154,7 @@ namespace StockMarket
             if (string.IsNullOrEmpty(propertyName))
                 return;
 
-            #region Valores de Refer�ncia
+            #region Valores de Refer麩cia
 
             if (this.Closing != acao.ClosedPrice_Formated)
             {
