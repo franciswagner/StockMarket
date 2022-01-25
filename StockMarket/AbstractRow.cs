@@ -45,9 +45,7 @@ namespace StockMarket
 
             this.Closing = closedPrice.ToString("#,##0.00");
             this.Opening = openingPrice.ToString("#,##0.00");
-            //this.Minimun = acoes.Acoes.Where(x => x.RequestedDate.Date == DateTime.Now.Date).Min(x => x.Price).ToString("#,##0.00");
             this.Minimun = acoes.Acoes.Last().MinimunPrice_Formated;
-            //this.Maximun = acoes.Acoes.Where(x => x.RequestedDate.Date == DateTime.Now.Date).Max(x => x.Price).ToString("#,##0.00");
             this.Maximun = acoes.Acoes.Last().MaximunPrice_Formated;
             this.Time1030 = sorted.FirstOrDefault(x => x.RequestedDate <= new DateTime(year, month, day, 10, 30, 00) && x.RequestedDate > new DateTime(year, month, day, 10, 00, 00))?.Price.ToString("#,##0.00");
             this.Time1100 = sorted.FirstOrDefault(x => x.RequestedDate <= new DateTime(year, month, day, 11, 00, 00) && x.RequestedDate > new DateTime(year, month, day, 10, 30, 00))?.Price.ToString("#,##0.00");
@@ -71,28 +69,6 @@ namespace StockMarket
         }
 
         public event PropertyChangedEventHandler PropertyChanged;
-
-        public string CalculateMD5()
-        {
-            var values = string.Empty;
-            var properties = this.GetType().GetProperties();
-
-            foreach (var property in properties)
-                if (property.Name != "Id")
-                    values += property.GetValue(this);
-
-            using (var md5 = MD5.Create())
-            {
-                var inputBytes = Encoding.ASCII.GetBytes(values);
-                var hashBytes = md5.ComputeHash(inputBytes);
-
-                var sb = new StringBuilder();
-                foreach (byte bytes in hashBytes)
-                    sb.Append(bytes.ToString("X2"));
-
-                return sb.ToString();
-            }
-        }
 
         [Browsable(false)]
         public int Id { get; set; }
@@ -121,26 +97,14 @@ namespace StockMarket
         public string Time1730
         {
             get { return this._time1730; }
-            set
-            {
-                if (!string.IsNullOrEmpty(value))
-                {
-                }
-                this._time1730 = value;
-            }
+            set { this._time1730 = value; }
         }
 
         private string _time1800 = null;
         public string Time1800
         {
             get { return this._time1800; }
-            set
-            {
-                if (!string.IsNullOrEmpty(value))
-                {
-                }
-                this._time1800 = value;
-            }
+            set { this._time1800 = value; }
         }
 
         public string RentabilidadePerc { get; set; }
@@ -198,7 +162,6 @@ namespace StockMarket
             #region Rentabilidade
 
             var closedPrice = acao.ClosedPrice;
-            //var openingPrice = acao.OppeningPrice;
             var lastPrice = acao.Price;
 
             var differencePriceValue = lastPrice - closedPrice;
