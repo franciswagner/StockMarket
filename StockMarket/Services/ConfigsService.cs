@@ -27,6 +27,8 @@ namespace StockMarket.Services
             get { return DateTime.Today + this.Closing; }
         }
 
+        public int MaxCandlesInGraph { get; } = 100;
+
         public bool IsMarketOpened
         {
             get

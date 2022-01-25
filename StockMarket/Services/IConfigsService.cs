@@ -16,7 +16,10 @@ namespace StockMarket.Services
 
         DateTime MarketOpening { get; }
 
+        int MaxCandlesInGraph { get; }
+
         TimeSpan Opening { get; set; }
+
 
         void Load();
 

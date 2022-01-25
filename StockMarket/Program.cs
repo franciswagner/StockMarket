@@ -33,6 +33,7 @@ namespace StockMarket
             var services = new ServiceCollection();
             services.AddSingleton<IConfigsService, ConfigsService>();
             services.AddTransient<IGatewayService, GatewayService>();
+            services.AddTransient<IPersistenceService, PersistenceService>();
             services.AddTransient<ISerializationService, SerializationService>();
             ServiceProvider = services.BuildServiceProvider();
         }

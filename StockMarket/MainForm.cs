@@ -252,10 +252,11 @@ namespace StockMarket
 
         private void MainForm_Load(object sender, EventArgs e)
         {
-            var serializationService = Program.ServiceProvider.GetService<ISerializationService>();
             var gatewayService = Program.ServiceProvider.GetService<IGatewayService>();
+            var persistenceService = Program.ServiceProvider.GetService<IPersistenceService>();
+            var serializationService = Program.ServiceProvider.GetService<ISerializationService>();
 
-            this._webMonitor = new WebMonitor(this._acoes, gatewayService, serializationService, this._configsService);
+            this._webMonitor = new WebMonitor(this._acoes, gatewayService, serializationService, this._configsService, persistenceService);
 
             var acoesMonitorList = this._webMonitor.AcoesCollections;
             this.LoadAbstract(acoesMonitorList);

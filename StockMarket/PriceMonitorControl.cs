@@ -108,7 +108,7 @@ namespace StockMarket
             .Select(g => new { TimeStamp = g.Key, Value = g.ToList() })
             .ToList();
 
-            groups = groups.TakeLastObject(WebMonitor.MAX_CANDLES_IN_GRAPH).ToList();
+            groups = groups.TakeLastObject(this._configsService.MaxCandlesInGraph).ToList();
 
             #region Coulumn Series
 

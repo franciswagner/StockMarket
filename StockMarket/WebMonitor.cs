@@ -10,20 +10,15 @@ namespace PriceMonitor
 {
     public class WebMonitor
     {
-        #region Consts
-
-        public const int MAX_CANDLES_IN_GRAPH = 100;
-
-        #endregion
-
         #region Constructors
 
-        public WebMonitor(string[] acoes, IGatewayService gatewayService, ISerializationService serializationService, IConfigsService configsService)
+        public WebMonitor(string[] acoes, IGatewayService gatewayService, ISerializationService serializationService, IConfigsService configsService, IPersistenceService persistenceService)
         {
             this._acoes = acoes;
 
             this._configsService = configsService;
             this._gatewayService = gatewayService;
+            this._persistenceService = persistenceService;
             this._serializationService = serializationService;
 
             this._gatewayService.LoadBestGateway(acoes);
@@ -38,6 +33,7 @@ namespace PriceMonitor
 
         private readonly IConfigsService _configsService;
         private readonly IGatewayService _gatewayService;
+        private readonly IPersistenceService _persistenceService;
         private readonly ISerializationService _serializationService;
 
         #endregion
@@ -51,7 +47,7 @@ namespace PriceMonitor
             {
                 if (this._acoesCollection == null)
                 {
-                    this._acoesCollection = this.LoadFromFiles();
+                    this._acoesCollection = this._persistenceService.LoadFromFiles(this._acoes);
 
                     if (!this._acoesCollection.Any())
                     {
@@ -76,23 +72,6 @@ namespace PriceMonitor
 
         #region Private Methods
 
-        private List<AcoesCollection> LoadFromFiles()
-        {
-            var acoesMonitorList = new List<AcoesCollection>();
-
-            foreach (var file in Directory.EnumerateFiles("DataFiles"))
-            {
-                if (!this._acoes.Any(x => x == Path.GetFileNameWithoutExtension(file)))
-                    continue;
-
-                var acoes = LoadFromFile(file);
-                if (acoes != null)
-                    acoesMonitorList.Add(acoes);
-            }
-
-            return acoesMonitorList;
-        }
-
         private List<AcoesCollection> ProcessJsonResult(AcoesJsonReaderPriceCollection acoesJsonReader, List<string> zeroValue)
         {
             var validAcoesCollections = new List<AcoesCollection>();
@@ -110,7 +89,7 @@ namespace PriceMonitor
                         continue;
                     }
 
-                    SaveToFile(name, acao);
+                    this._persistenceService.SaveToFile(name, acao);
 
                     var acoesCollection = this.AcoesCollections.FirstOrDefault(x => x.Name == name);
                     if (acoesCollection != null)
@@ -209,85 +188,6 @@ namespace PriceMonitor
             if (acoesNewMinimun.Any())
                 callback_Notification(acoesNewMinimun.Count, messageNotification.ToString());
         }
-
-        #endregion
-
-        #region Static Methods
-
-        private AcoesCollection LoadFromFile(string file)
-        {
-            var acoes = new AcoesCollection();
-
-            using (var sr = new StreamReader(file))
-                while (true)
-                {
-                    var line = (sr.ReadLine() ?? "").Trim();
-
-                    if (string.IsNullOrEmpty(line))
-                        break;
-
-                    line = NormalizeLine(line);
-
-                    var splitedLine = line.Split(';');
-
-                    if (!acoes.Acoes.Any())
-                        acoes.Name = splitedLine[0];
-
-                    acoes.Acoes.Add(new Acao()
-                    {
-                        RequestedDate = Convert.ToDateTime(splitedLine[1]),
-                        Date = Convert.ToDateTime(splitedLine[2]),
-                        OppeningPrice = splitedLine[3].ToDecimal(),
-                        Price = splitedLine[4].ToDecimal(),
-                        MinimunPrice = splitedLine[5].ToDecimal(),
-                        MaximunPrice = splitedLine[6].ToDecimal(),
-                        AveragePrice = splitedLine[7].ToDecimal(),
-                        Volume = splitedLine[8].ToDecimal(),
-                        ClosedPrice = splitedLine[9].ToDecimal()
-                    });
-                }
-
-            if (!acoes.Acoes.Any())
-                return null;
-
-            //30 min X max points
-            var max = MAX_CANDLES_IN_GRAPH * this._configsService.CandlePeriod;
-
-            if (acoes.Acoes.Count > max)
-                acoes.Acoes = acoes.Acoes.TakeLast(max).ToList();
-
-            return acoes;
-        }
-
-        private static string NormalizeLine(string line)
-        {
-            var columns = line.Count(x => x == ';');
-            if (columns < 9)
-                line = string.Concat(line, new string(';', 9 - columns));
-
-            return line;
-        }
-
-        private static void SaveToFile(string name, Acao acao)
-        {
-            if (!Directory.Exists("DataFiles"))
-                Directory.CreateDirectory("DataFiles");
-
-            var spliter = ";";
-            using (var sw = new StreamWriter(Path.Combine("DataFiles", name + ".txt"), true))
-                sw.WriteLine(
-                    name + spliter +
-                    acao.RequestedDate + spliter +
-                    acao.Date + spliter +
-                    acao.OppeningPrice + spliter +
-                    acao.Price + spliter +
-                    acao.MinimunPrice + spliter +
-                    acao.MaximunPrice + spliter +
-                    acao.AveragePrice + spliter +
-                    acao.Volume + spliter +
-                    acao.ClosedPrice);
-        }
-
 
         #endregion
     }
