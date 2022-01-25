@@ -1,4 +1,5 @@
-﻿using System;
+﻿using StockMarket.Factories;
+using System;
 using System.Configuration;
 using System.IO;
 using System.Linq;
@@ -11,15 +12,17 @@ namespace StockMarket.Services
     {
         #region Constructors
 
-        public GatewayService(ISerializationService serializationService)
+        public GatewayService(ISerializationService serializationService, IHttpWebRequestFactory httpWebRequestFactory)
         {
             this._serializationService = serializationService;
+            this._httpWebRequestFactory = httpWebRequestFactory;
         }
 
         #endregion
 
         #region Private Fields
 
+        private readonly IHttpWebRequestFactory _httpWebRequestFactory;
         private readonly ISerializationService _serializationService;
 
         private readonly string[] _gateways = { "mdgateway", "mdgateway01", "mdgateway02", "mdgateway03", "mdgateway04", "mdgateway06" };
@@ -36,7 +39,7 @@ namespace StockMarket.Services
 
         private bool TestGateway(string url, out int count)
         {
-            var json = RequestJson(url);
+            var json = this.RequestJson(url);
 
             if (string.IsNullOrWhiteSpace(json))
             {
@@ -100,21 +103,12 @@ namespace StockMarket.Services
 
         public string RequestJson(string url)
         {
-            var uri = new Uri(url);
-
-            var request = (HttpWebRequest)WebRequest.Create(uri);
-            request.Method = "GET";
-            request.Accept = "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8";
-            request.UserAgent = "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:36.0) Gecko/20100101 Firefox/36.0";
-            request.Headers.Add("Accept-Language", "pt-BR,pt;q=0.8,en-US;q=0.5,en;q=0.3");
-            request.Headers.Add("Upgrade-Insecure-Requests", "1");
-            request.Headers.Add("Pragma", "no-cache");
-            request.Headers.Add("Cache-Control", "no-cache");
+            var request = this._httpWebRequestFactory.Create(url);
 
             try
             {
                 var htmlSource = string.Empty;
-                var response = (HttpWebResponse)request.GetResponse();
+                var response = (IHttpWebResponse)request.GetResponse();
 
                 try
                 {
