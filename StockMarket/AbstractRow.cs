@@ -1,9 +1,7 @@
-﻿using System;
+﻿using PriceMonitor;
+using System;
 using System.ComponentModel;
 using System.Linq;
-using System.Security.Cryptography;
-using System.Text;
-using PriceMonitor;
 
 namespace StockMarket
 {
@@ -47,22 +45,23 @@ namespace StockMarket
             this.Opening = openingPrice.ToString("#,##0.00");
             this.Minimun = acoes.Acoes.Last().MinimunPrice_Formated;
             this.Maximun = acoes.Acoes.Last().MaximunPrice_Formated;
-            this.Time1030 = sorted.FirstOrDefault(x => x.RequestedDate <= new DateTime(year, month, day, 10, 30, 00) && x.RequestedDate > new DateTime(year, month, day, 10, 00, 00))?.Price.ToString("#,##0.00");
-            this.Time1100 = sorted.FirstOrDefault(x => x.RequestedDate <= new DateTime(year, month, day, 11, 00, 00) && x.RequestedDate > new DateTime(year, month, day, 10, 30, 00))?.Price.ToString("#,##0.00");
-            this.Time1130 = sorted.FirstOrDefault(x => x.RequestedDate <= new DateTime(year, month, day, 11, 30, 00) && x.RequestedDate > new DateTime(year, month, day, 11, 00, 00))?.Price.ToString("#,##0.00");
-            this.Time1200 = sorted.FirstOrDefault(x => x.RequestedDate <= new DateTime(year, month, day, 12, 00, 00) && x.RequestedDate > new DateTime(year, month, day, 11, 30, 00))?.Price.ToString("#,##0.00");
-            this.Time1230 = sorted.FirstOrDefault(x => x.RequestedDate <= new DateTime(year, month, day, 12, 30, 00) && x.RequestedDate > new DateTime(year, month, day, 12, 00, 00))?.Price.ToString("#,##0.00");
-            this.Time1300 = sorted.FirstOrDefault(x => x.RequestedDate <= new DateTime(year, month, day, 13, 00, 00) && x.RequestedDate > new DateTime(year, month, day, 12, 30, 00))?.Price.ToString("#,##0.00");
-            this.Time1330 = sorted.FirstOrDefault(x => x.RequestedDate <= new DateTime(year, month, day, 13, 30, 00) && x.RequestedDate > new DateTime(year, month, day, 13, 00, 00))?.Price.ToString("#,##0.00");
-            this.Time1400 = sorted.FirstOrDefault(x => x.RequestedDate <= new DateTime(year, month, day, 14, 00, 00) && x.RequestedDate > new DateTime(year, month, day, 13, 30, 00))?.Price.ToString("#,##0.00");
-            this.Time1430 = sorted.FirstOrDefault(x => x.RequestedDate <= new DateTime(year, month, day, 14, 30, 00) && x.RequestedDate > new DateTime(year, month, day, 14, 00, 00))?.Price.ToString("#,##0.00");
-            this.Time1500 = sorted.FirstOrDefault(x => x.RequestedDate <= new DateTime(year, month, day, 15, 00, 00) && x.RequestedDate > new DateTime(year, month, day, 14, 30, 00))?.Price.ToString("#,##0.00");
-            this.Time1530 = sorted.FirstOrDefault(x => x.RequestedDate <= new DateTime(year, month, day, 15, 30, 00) && x.RequestedDate > new DateTime(year, month, day, 15, 00, 00))?.Price.ToString("#,##0.00");
-            this.Time1600 = sorted.FirstOrDefault(x => x.RequestedDate <= new DateTime(year, month, day, 16, 00, 00) && x.RequestedDate > new DateTime(year, month, day, 15, 30, 00))?.Price.ToString("#,##0.00");
-            this.Time1630 = sorted.FirstOrDefault(x => x.RequestedDate <= new DateTime(year, month, day, 16, 30, 00) && x.RequestedDate > new DateTime(year, month, day, 16, 00, 00))?.Price.ToString("#,##0.00");
-            this.Time1700 = sorted.FirstOrDefault(x => x.RequestedDate <= new DateTime(year, month, day, 17, 00, 00) && x.RequestedDate > new DateTime(year, month, day, 16, 30, 00))?.Price.ToString("#,##0.00");
-            this.Time1730 = sorted.FirstOrDefault(x => x.RequestedDate <= new DateTime(year, month, day, 17, 30, 00) && x.RequestedDate > new DateTime(year, month, day, 17, 00, 00))?.Price.ToString("#,##0.00");
-            this.Time1800 = sorted.FirstOrDefault(x => x.RequestedDate <= new DateTime(year, month, day, 18, 00, 00) && x.RequestedDate > new DateTime(year, month, day, 17, 30, 00))?.Price.ToString("#,##0.00");
+            this.Time1030 = sorted.ReturnAcaoWithOldestDate(new DateTime(year, month, day, 10, 00, 00), new DateTime(year, month, day, 10, 30, 00))?.Price.ToString("#,##0.00");
+            this.Time1100 = sorted.ReturnAcaoWithOldestDate(new DateTime(year, month, day, 10, 30, 00), new DateTime(year, month, day, 11, 00, 00))?.Price.ToString("#,##0.00");
+            this.Time1130 = sorted.ReturnAcaoWithOldestDate(new DateTime(year, month, day, 11, 00, 00), new DateTime(year, month, day, 11, 30, 00))?.Price.ToString("#,##0.00");
+            this.Time1200 = sorted.ReturnAcaoWithOldestDate(new DateTime(year, month, day, 11, 30, 00), new DateTime(year, month, day, 12, 00, 00))?.Price.ToString("#,##0.00");
+            this.Time1230 = sorted.ReturnAcaoWithOldestDate(new DateTime(year, month, day, 12, 00, 00), new DateTime(year, month, day, 12, 30, 00))?.Price.ToString("#,##0.00");
+            this.Time1300 = sorted.ReturnAcaoWithOldestDate(new DateTime(year, month, day, 12, 30, 00), new DateTime(year, month, day, 13, 00, 00))?.Price.ToString("#,##0.00");
+            this.Time1330 = sorted.ReturnAcaoWithOldestDate(new DateTime(year, month, day, 13, 00, 00), new DateTime(year, month, day, 13, 30, 00))?.Price.ToString("#,##0.00");
+            this.Time1400 = sorted.ReturnAcaoWithOldestDate(new DateTime(year, month, day, 13, 30, 00), new DateTime(year, month, day, 14, 00, 00))?.Price.ToString("#,##0.00");
+            this.Time1430 = sorted.ReturnAcaoWithOldestDate(new DateTime(year, month, day, 14, 00, 00), new DateTime(year, month, day, 14, 30, 00))?.Price.ToString("#,##0.00");
+            this.Time1500 = sorted.ReturnAcaoWithOldestDate(new DateTime(year, month, day, 14, 30, 00), new DateTime(year, month, day, 15, 00, 00))?.Price.ToString("#,##0.00");
+            this.Time1530 = sorted.ReturnAcaoWithOldestDate(new DateTime(year, month, day, 15, 00, 00), new DateTime(year, month, day, 15, 30, 00))?.Price.ToString("#,##0.00");
+            this.Time1600 = sorted.ReturnAcaoWithOldestDate(new DateTime(year, month, day, 15, 30, 00), new DateTime(year, month, day, 16, 00, 00))?.Price.ToString("#,##0.00");
+            this.Time1630 = sorted.ReturnAcaoWithOldestDate(new DateTime(year, month, day, 16, 00, 00), new DateTime(year, month, day, 16, 30, 00))?.Price.ToString("#,##0.00");
+            this.Time1700 = sorted.ReturnAcaoWithOldestDate(new DateTime(year, month, day, 16, 30, 00), new DateTime(year, month, day, 17, 00, 00))?.Price.ToString("#,##0.00");
+            this.Time1730 = sorted.ReturnAcaoWithOldestDate(new DateTime(year, month, day, 17, 00, 00), new DateTime(year, month, day, 17, 30, 00))?.Price.ToString("#,##0.00");
+            this.Time1800 = sorted.ReturnAcaoWithOldestDate(new DateTime(year, month, day, 17, 30, 00), new DateTime(year, month, day, 18, 00, 00))?.Price.ToString("#,##0.00");
+
             this.RentabilidadePerc = differencePricePercentage.ToString("#,##0.00");
             this.RentabilidadeValor = differencePriceValue.ToString("#,##0.00");
             this.Volume = volume > 1000000 ? (volume / 1000000M).ToString("#,##0.000") + "M" : volume.ToString("#,##0");
@@ -92,20 +91,8 @@ namespace StockMarket
         public string Time1600 { get; set; }
         public string Time1630 { get; set; }
         public string Time1700 { get; set; }
-
-        private string _time1730 = null;
-        public string Time1730
-        {
-            get { return this._time1730; }
-            set { this._time1730 = value; }
-        }
-
-        private string _time1800 = null;
-        public string Time1800
-        {
-            get { return this._time1800; }
-            set { this._time1800 = value; }
-        }
+        public string Time1730 { get; set; }
+        public string Time1800 { get; set; }
 
         public string RentabilidadePerc { get; set; }
         public string RentabilidadeValor { get; set; }

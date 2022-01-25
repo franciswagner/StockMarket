@@ -1,4 +1,5 @@
-﻿using System;
+﻿using StockMarket;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -30,6 +31,11 @@ namespace PriceMonitor
         {
             value = string.IsNullOrEmpty(value) ? "0" : value;
             return Convert.ToDecimal(value);
+        }
+
+        public static Acao ReturnAcaoWithOldestDate(this IEnumerable<Acao> list, DateTime minDate, DateTime maxDate)
+        {
+            return list.FirstOrDefault(x => x.RequestedDate <= maxDate && x.RequestedDate > minDate);
         }
     }
 }
