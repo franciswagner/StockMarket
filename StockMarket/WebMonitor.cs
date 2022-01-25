@@ -92,13 +92,8 @@ namespace PriceMonitor
                     this._persistenceService.SaveToFile(name, acao);
 
                     var acoesCollection = this.AcoesCollections.FirstOrDefault(x => x.Name == name);
-                    if (acoesCollection != null)
-                    {
-                        acoesCollection.Acoes.Add(acao);
-                        validAcoesCollections.Add(acoesCollection);
-                    }
-                    else
-                        this.AcoesCollections.Add(new AcoesCollection(name, acao));
+                    acoesCollection.Acoes.Add(acao);
+                    validAcoesCollections.Add(acoesCollection);
                 }
             }
 

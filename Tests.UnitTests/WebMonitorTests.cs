@@ -236,6 +236,7 @@ namespace Tests.UnitTests
 
             var acao1 = acoesJsonReaderPriceBuilder.With(x => x.S, acoes[0]).Create();
             var acao2 = acoesJsonReaderPriceBuilder.With(x => x.S, acoes[1]).Create();
+            acao2.Ps.P = 0;
             acao2.Ps.MnP = 0;
             var mockedJsonResult = new AcoesJsonReaderPriceCollection()
             {
