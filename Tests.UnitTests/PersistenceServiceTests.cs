@@ -2,16 +2,11 @@
 using FluentAssertions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
-using PriceMonitor;
 using StockMarket;
-using StockMarket.Factories;
 using StockMarket.Services;
-using System.Collections.Generic;
-using System.Configuration;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Text;
 
 namespace Tests.UnitTests
 {
@@ -48,6 +43,7 @@ namespace Tests.UnitTests
                 this.EnsureDataFilesDoNotExist();
             }
         }
+
         [TestMethod]
         public void SaveToFile_WhenHaveDataToPersist_ShouldWriteInFile()
         {

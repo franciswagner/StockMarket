@@ -1,6 +1,7 @@
 ﻿using PriceMonitor;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 
@@ -46,8 +47,8 @@ namespace StockMarket.Services
 
                     acoes.Acoes.Add(new Acao()
                     {
-                        RequestedDate = Convert.ToDateTime(splitedLine[1]),
-                        Date = Convert.ToDateTime(splitedLine[2]),
+                        RequestedDate = Convert.ToDateTime(splitedLine[1], new CultureInfo("pt-BR", false)),
+                        Date = Convert.ToDateTime(splitedLine[2], new CultureInfo("pt-BR", false)),
                         OppeningPrice = splitedLine[3].ToDecimal(),
                         Price = splitedLine[4].ToDecimal(),
                         MinimunPrice = splitedLine[5].ToDecimal(),
@@ -109,8 +110,8 @@ namespace StockMarket.Services
             using (var sw = new StreamWriter(Path.Combine("DataFiles", name + ".txt"), true))
                 sw.WriteLine(
                     name + spliter +
-                    acao.RequestedDate + spliter +
-                    acao.Date + spliter +
+                    acao.RequestedDate.ToString(new CultureInfo("pt-BR", false)) + spliter +
+                    acao.Date.ToString(new CultureInfo("pt-BR", false)) + spliter +
                     acao.OppeningPrice + spliter +
                     acao.Price + spliter +
                     acao.MinimunPrice + spliter +
