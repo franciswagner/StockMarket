@@ -105,7 +105,7 @@ namespace StockMarket
             if (string.IsNullOrEmpty(propertyName))
                 return;
 
-            #region Valores de Refer麩cia
+            #region Valores de Referencia
 
             if (this.Closing != acao.ClosedPrice_Formated)
             {
