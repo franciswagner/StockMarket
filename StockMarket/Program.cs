@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+using StockMarket.Factories;
 using StockMarket.Services;
 using System;
 using System.Net;
@@ -35,6 +36,7 @@ namespace StockMarket
             services.AddTransient<IGatewayService, GatewayService>();
             services.AddTransient<IPersistenceService, PersistenceService>();
             services.AddTransient<ISerializationService, SerializationService>();
+            services.AddTransient<IHttpWebRequestFactory, HttpWebRequestFactory>();
             ServiceProvider = services.BuildServiceProvider();
         }
     }

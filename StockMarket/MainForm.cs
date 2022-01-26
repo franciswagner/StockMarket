@@ -1,4 +1,5 @@
-﻿using PriceMonitor;
+﻿using Microsoft.Extensions.DependencyInjection;
+using PriceMonitor;
 using StockMarket.Properties;
 using StockMarket.Services;
 using System;
@@ -11,7 +12,6 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace StockMarket
 {

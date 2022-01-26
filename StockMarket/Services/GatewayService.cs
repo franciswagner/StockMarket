@@ -107,30 +107,30 @@ namespace StockMarket.Services
             try
             {
                 var htmlSource = string.Empty;
-                var response = (IHttpWebResponse)request.GetResponse();
 
-                try
-                {
-                    Encoding encoding;
-                    if (response.ContentType.ToLower().Contains("utf-8"))
-                        encoding = Encoding.UTF8;
-                    else
-                        encoding = Encoding.GetEncoding("ISO-8859-1");
-
-                    using (var sr = new StreamReader(response.GetResponseStream(), encoding))
+                using (var response = request.GetResponse())
+                    try
                     {
-                        if (sr.BaseStream.CanTimeout)
-                            sr.BaseStream.ReadTimeout = 5000;
+                        Encoding encoding;
+                        if (response.ContentType.ToLower().Contains("utf-8"))
+                            encoding = Encoding.UTF8;
+                        else
+                            encoding = Encoding.GetEncoding("ISO-8859-1");
 
-                        htmlSource = sr.ReadToEnd();
+                        using (var sr = new StreamReader(response.GetResponseStream(), encoding))
+                        {
+                            if (sr.BaseStream.CanTimeout)
+                                sr.BaseStream.ReadTimeout = 5000;
 
-                        return htmlSource;
+                            htmlSource = sr.ReadToEnd();
+
+                            return htmlSource;
+                        }
                     }
-                }
-                catch (Exception)
-                {
-                    return string.Empty;
-                }
+                    catch (Exception)
+                    {
+                        return string.Empty;
+                    }
             }
             catch
             {

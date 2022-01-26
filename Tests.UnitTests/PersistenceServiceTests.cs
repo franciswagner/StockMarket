@@ -20,7 +20,7 @@ namespace Tests.UnitTests
             try
             {
                 // Arrange
-                this.EnsureDataFilesExist();
+                EnsureDataFilesExist();
 
                 var ticketNames = new string[] { "IBOV", "PETR4", "ABC" };
 
@@ -41,7 +41,7 @@ namespace Tests.UnitTests
             }
             finally
             {
-                this.EnsureDataFilesDoNotExist();
+                EnsureDataFilesDoNotExist();
             }
         }
 
@@ -51,7 +51,7 @@ namespace Tests.UnitTests
             try
             {
                 // Arrange
-                this.EnsureDataFilesDoNotExist();
+                EnsureDataFilesDoNotExist();
 
                 var acao = new Fixture().Build<Acao>().Create();
 
@@ -77,11 +77,11 @@ namespace Tests.UnitTests
             }
             finally
             {
-                this.EnsureDataFilesDoNotExist();
+                EnsureDataFilesDoNotExist();
             }
         }
 
-        private void EnsureDataFilesExist()
+        private static void EnsureDataFilesExist()
         {
             if (!Directory.Exists("DataFiles"))
                 Directory.CreateDirectory("DataFiles");
@@ -95,7 +95,7 @@ namespace Tests.UnitTests
                 resource.CopyTo(file);
         }
 
-        private void EnsureDataFilesDoNotExist()
+        private static void EnsureDataFilesDoNotExist()
         {
             if (Directory.Exists("DataFiles"))
                 Directory.Delete("DataFiles", true);

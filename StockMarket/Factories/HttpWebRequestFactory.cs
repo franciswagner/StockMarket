@@ -1,8 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Net;
-using System.Text;
 
 namespace StockMarket.Factories
 {
@@ -48,7 +46,7 @@ namespace StockMarket.Factories
         }
     }
 
-    public class WrapHttpWebResponse : IHttpWebResponse
+    public sealed class WrapHttpWebResponse : IHttpWebResponse
     {
         private WebResponse _response;
 
@@ -65,13 +63,10 @@ namespace StockMarket.Factories
 
         private void Dispose(bool disposing)
         {
-            if (disposing)
+            if (disposing && _response != null)
             {
-                if (_response != null)
-                {
-                    ((IDisposable)_response).Dispose();
-                    _response = null;
-                }
+                ((IDisposable)_response).Dispose();
+                _response = null;
             }
         }
 

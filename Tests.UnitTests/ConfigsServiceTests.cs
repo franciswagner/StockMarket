@@ -16,7 +16,7 @@ namespace Tests.UnitTests
             // Arrange
             try
             {
-                this.EnsureConfigFileExists();
+                EnsureConfigFileExists();
 
                 var configsService = new ConfigsService();
 
@@ -31,7 +31,7 @@ namespace Tests.UnitTests
             }
             finally
             {
-                this.EnsureConfigFileDoesNotExist();
+                EnsureConfigFileDoesNotExist();
             }
         }
 
@@ -39,7 +39,7 @@ namespace Tests.UnitTests
         public void Load_WhenConfigFileDoesNotExists_ShouldLoadDefaultConfigs()
         {
             // Arrange
-            this.EnsureConfigFileDoesNotExist();
+            EnsureConfigFileDoesNotExist();
 
             var configsService = new ConfigsService();
 
@@ -59,7 +59,7 @@ namespace Tests.UnitTests
             // Arrange
             try
             {
-                this.EnsureConfigFileDoesNotExist();
+                EnsureConfigFileDoesNotExist();
 
                 var configsService = new ConfigsService();
                 configsService.Acoes = "TEST";
@@ -79,18 +79,18 @@ namespace Tests.UnitTests
             }
             finally
             {
-                this.EnsureConfigFileDoesNotExist();
+                EnsureConfigFileDoesNotExist();
             }
         }
 
-        private void EnsureConfigFileExists()
+        private static void EnsureConfigFileExists()
         {
             using (var resource = Assembly.GetExecutingAssembly().GetManifestResourceStream("Tests.UnitTests.TestFiles.config.ini"))
             using (var file = new FileStream("config.ini", FileMode.Create, FileAccess.Write))
                 resource.CopyTo(file);
         }
 
-        private void EnsureConfigFileDoesNotExist()
+        private static void EnsureConfigFileDoesNotExist()
         {
             if (File.Exists("config.ini"))
                 File.Delete("config.ini");

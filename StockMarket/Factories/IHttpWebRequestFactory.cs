@@ -2,6 +2,6 @@
 {
     public interface IHttpWebRequestFactory
     {
-        IHttpWebRequest Create(string uri);
+        IHttpWebRequest Create(string url);
     }
 }
