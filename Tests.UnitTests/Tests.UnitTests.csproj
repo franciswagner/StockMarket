@@ -8,10 +8,14 @@
 
   <ItemGroup>
     <None Remove="config.ini" />
+    <None Remove="DataFiles\IBOV.txt" />
+    <None Remove="DataFiles\PETR4.txt" />
   </ItemGroup>
 
   <ItemGroup>
     <EmbeddedResource Include="config.ini" />
+    <EmbeddedResource Include="DataFiles\IBOV.txt" />
+    <EmbeddedResource Include="DataFiles\PETR4.txt" />
   </ItemGroup>
 
   <ItemGroup>
@@ -29,6 +33,15 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Update="CustomDataGridView.cs">
+      <SubType>Component</SubType>
+    </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="CodeCoverage.runsettings">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="testhost.dll.config">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

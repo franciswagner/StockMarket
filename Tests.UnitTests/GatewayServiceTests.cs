@@ -1,18 +1,14 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using StockMarket.Services;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
+﻿using AutoFixture;
 using FluentAssertions;
-using StockMarket.Factories;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
-using AutoFixture;
 using PriceMonitor;
+using StockMarket.Factories;
+using StockMarket.Services;
+using System.Collections.Generic;
 using System.Configuration;
+using System.IO;
+using System.Text;
 
 namespace Tests.UnitTests
 {
