@@ -65,4 +65,8 @@
     <Content Include="Resources\icon2.ico" />
     <Content Include="Resources\icon2.png" />
   </ItemGroup>
+
+  <PropertyGroup>
+    <RunSettingsFilePath>$(MSBuildProjectDirectory)\CodeCoverage.runsettings</RunSettingsFilePath>
+  </PropertyGroup>
 </Project>
