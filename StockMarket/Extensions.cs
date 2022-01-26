@@ -1,6 +1,7 @@
 ﻿using StockMarket;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 
 namespace PriceMonitor
@@ -30,7 +31,7 @@ namespace PriceMonitor
         public static decimal ToDecimal(this string value)
         {
             value = string.IsNullOrEmpty(value) ? "0" : value;
-            return Convert.ToDecimal(value);
+            return Convert.ToDecimal(value, new CultureInfo("pt-BR", false));
         }
 
         public static Acao ReturnAcaoWithOldestDate(this IEnumerable<Acao> list, DateTime minDate, DateTime maxDate)

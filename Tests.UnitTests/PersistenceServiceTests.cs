@@ -4,6 +4,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 using StockMarket;
 using StockMarket.Services;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -64,15 +65,15 @@ namespace Tests.UnitTests
                 var content = File.ReadAllText(@"DataFiles\ABC.txt").Trim();
                 content.Count(x => x == ';').Should().Be(9);
                 content.Split(';')[0].Should().Be("ABC");
-                content.Split(';')[1].Should().Be(acao.RequestedDate.ToString());
-                content.Split(';')[2].Should().Be(acao.Date.ToString());
-                content.Split(';')[3].Should().Be(acao.OppeningPrice.ToString());
-                content.Split(';')[4].Should().Be(acao.Price.ToString());
-                content.Split(';')[5].Should().Be(acao.MinimunPrice.ToString());
-                content.Split(';')[6].Should().Be(acao.MaximunPrice.ToString());
-                content.Split(';')[7].Should().Be(acao.AveragePrice.ToString());
-                content.Split(';')[8].Should().Be(acao.Volume.ToString());
-                content.Split(';')[9].Should().Be(acao.ClosedPrice.ToString());
+                content.Split(';')[1].Should().Be(acao.RequestedDate.ToString(new CultureInfo("pt-BR", false)));
+                content.Split(';')[2].Should().Be(acao.Date.ToString(new CultureInfo("pt-BR", false)));
+                content.Split(';')[3].Should().Be(acao.OppeningPrice.ToString(new CultureInfo("pt-BR", false)));
+                content.Split(';')[4].Should().Be(acao.Price.ToString(new CultureInfo("pt-BR", false)));
+                content.Split(';')[5].Should().Be(acao.MinimunPrice.ToString(new CultureInfo("pt-BR", false)));
+                content.Split(';')[6].Should().Be(acao.MaximunPrice.ToString(new CultureInfo("pt-BR", false)));
+                content.Split(';')[7].Should().Be(acao.AveragePrice.ToString(new CultureInfo("pt-BR", false)));
+                content.Split(';')[8].Should().Be(acao.Volume.ToString(new CultureInfo("pt-BR", false)));
+                content.Split(';')[9].Should().Be(acao.ClosedPrice.ToString(new CultureInfo("pt-BR", false)));
             }
             finally
             {
