@@ -6,14 +6,18 @@
       <DataCollector friendlyName="XPlat Code Coverage">
         <Configuration>
           <ExcludeByFile>
+            **/IConfigsService.cs,
+            **/IGatewayService.cs,
+            **/IPersistenceService.cs,
+            **/ISerializationService.cs,
             **/HttpWebRequestFactory.cs,
             **/IHttpWebRequestFactory.cs,
             **/PriceMonitorControl.cs,
-            **/MainForm.cs,
             **/CustomDataGridView.cs,
             **/CustomChart.cs,
-            **/ConfigForm.cs,
-            **/Program.cs
+            **/Program.cs,
+            **/*Form.cs,
+            **/*Designer.cs
           </ExcludeByFile>
         </Configuration>
       </DataCollector>
