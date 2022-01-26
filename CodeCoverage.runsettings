@@ -16,6 +16,7 @@
             **/CustomDataGridView.cs,
             **/CustomChart.cs,
             **/Program.cs,
+            **/Extensions.cs,
             **/*Form.cs,
             **/*Designer.cs
           </ExcludeByFile>
