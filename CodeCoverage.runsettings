@@ -5,7 +5,7 @@
     <DataCollectors>
       <DataCollector friendlyName="XPlat Code Coverage">
         <Configuration>
-          <ExcludeByFile>**/HttpWebRequestFactory.cs,**/IHttpWebRequestFactory.cs</ExcludeByFile>
+          <ExcludeByFile>**/HttpWebRequestFactory.cs,**/IHttpWebRequestFactory.cs,**/PriceMonitorControl.cs,**/MainForm.cs,**/CustomDataGridView.cs,**/CustomChart.cs,**/ConfigForm.cs</ExcludeByFile>
         </Configuration>
       </DataCollector>
     </DataCollectors>
