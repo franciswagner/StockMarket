@@ -52,8 +52,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
         shell: powershell
         run: |
-          #dotnet test Tests.UnitTests\Tests.UnitTests.csproj /p:CollectCoverage=true /p:IncludeTestAssembly=true /p:CoverletOutputFormat=cobertura /p:ExcludeByFile=\"**/Microsoft.NET.Test.Sdk.Program.cs\" /p:CoverletOutput=\TestResults\coverage.cobertura.xml --collect:"XPlat Code Coverage" -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.ExcludeByFile=**/GatewayService.cs
-          dotnet test Tests.UnitTests\Tests.UnitTests.csproj /p:CollectCoverage=true /p:IncludeTestAssembly=true /p:CoverletOutputFormat=cobertura /p:ExcludeByFile=\"**/Microsoft.NET.Test.Sdk.Program.cs\" /p:CoverletOutput=\TestResults\coverage.cobertura.xml --collect:"XPlat Code Coverage" --settings CodeCoverage.runsettings
+          dotnet test Tests.UnitTests\Tests.UnitTests.csproj /p:CollectCoverage=true /p:IncludeTestAssembly=true /p:CoverletOutputFormat=cobertura /p:CoverletOutput=\TestResults\coverage.cobertura.xml --collect:"XPlat Code Coverage" --settings CodeCoverage.runsettings
           dotnet tool install --global dotnet-reportgenerator-globaltool --version 5.0.2
           reportgenerator "-reports:D:\a\StockMarket\StockMarket\Tests.UnitTests\TestResults\*\coverage.cobertura.xml" "-targetdir:sonarqubecoverage" "-reporttypes:SonarQube"
           .\.sonar\scanner\dotnet-sonarscanner end /d:sonar.login="${{ secrets.SONAR_TOKEN }}"
