@@ -86,11 +86,11 @@ namespace Tests.UnitTests
             if (!Directory.Exists("DataFiles"))
                 Directory.CreateDirectory("DataFiles");
 
-            using (var resource = Assembly.GetExecutingAssembly().GetManifestResourceStream("Tests.UnitTests.DataFiles.IBOV.txt"))
+            using (var resource = Assembly.GetExecutingAssembly().GetManifestResourceStream("Tests.UnitTests.TestFiles.IBOV.txt"))
             using (var file = new FileStream(@"DataFiles\IBOV.txt", FileMode.Create, FileAccess.Write))
                 resource.CopyTo(file);
 
-            using (var resource = Assembly.GetExecutingAssembly().GetManifestResourceStream("Tests.UnitTests.DataFiles.PETR4.txt"))
+            using (var resource = Assembly.GetExecutingAssembly().GetManifestResourceStream("Tests.UnitTests.TestFiles.PETR4.txt"))
             using (var file = new FileStream(@"DataFiles\PETR4.txt", FileMode.Create, FileAccess.Write))
                 resource.CopyTo(file);
         }

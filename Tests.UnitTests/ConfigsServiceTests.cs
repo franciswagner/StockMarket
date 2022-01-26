@@ -85,7 +85,7 @@ namespace Tests.UnitTests
 
         private void EnsureConfigFileExists()
         {
-            using (var resource = Assembly.GetExecutingAssembly().GetManifestResourceStream("Tests.UnitTests.config.ini"))
+            using (var resource = Assembly.GetExecutingAssembly().GetManifestResourceStream("Tests.UnitTests.TestFiles.config.ini"))
             using (var file = new FileStream("config.ini", FileMode.Create, FileAccess.Write))
                 resource.CopyTo(file);
         }
