@@ -12,7 +12,8 @@
             **/MainForm.cs,
             **/CustomDataGridView.cs,
             **/CustomChart.cs,
-            **/ConfigForm.cs
+            **/ConfigForm.cs,
+            **/Program.cs
           </ExcludeByFile>
         </Configuration>
       </DataCollector>
